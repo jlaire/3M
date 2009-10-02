@@ -35,6 +35,6 @@ int show_result(result_t result, char *string, int N);
 
 void generate_database(enum ruleset ruleset);
 
-result_t lookup(struct position *position);
+result_t lookup(position_t position);
 
 #endif

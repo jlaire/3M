@@ -53,14 +53,15 @@ void init_indices(void) {
 		indices[i] = MUSKETEER_INDICES * enemy_indices[i];
 }
 
-int musketeers_to_index[SQUARES][SQUARES][SQUARES];
-int index_to_musketeers[MUSKETEER_INDICES][3];
+uint16_t musketeers_to_index[1 << 25];
+uint64_t index_to_musketeers[MUSKETEER_INDICES];
 
 void init_indexing_tables(void) {
-	int i;
-	int j;
-	int k;
-	int count = 0;
+	uint64_t i;
+	uint64_t j;
+	uint64_t k;
+	uint64_t n;
+	uint64_t count = 0;
 
 	init_factorial();
 	init_combinations();
@@ -70,15 +71,9 @@ void init_indexing_tables(void) {
 	for (i = 0; i < SQUARES; ++i) {
 		for (j = i + 1; j < SQUARES; ++j) {
 			for (k = j + 1; k < SQUARES; ++k) {
-				musketeers_to_index[i][j][k] = count;
-				musketeers_to_index[i][k][j] = count;
-				musketeers_to_index[j][i][k] = count;
-				musketeers_to_index[j][k][i] = count;
-				musketeers_to_index[k][i][j] = count;
-				musketeers_to_index[k][j][i] = count;
-				index_to_musketeers[count][0] = i;
-				index_to_musketeers[count][1] = j;
-				index_to_musketeers[count][2] = k;
+				n = 1 << 24 - i | 1 << 24 - j | 1 << (24 - k);
+				musketeers_to_index[n] = count;
+				index_to_musketeers[count] = n;
 				++count;
 			}
 		}
@@ -112,18 +107,22 @@ void index_to_combination(int *p, uint64_t index, int N, int K) {
 	}
 }
 
-uint64_t position_to_index(struct position *position) {
-	uint64_t index = 0;
+uint64_t position_to_index(position_t position) {
+	uint64_t index;
 	int ms[3];
 	int musketeers = 0;
 	int i;
 	int j;
+	int n;
 	int p[MAX_ENEMIES];
 	int enemies = count_enemies(position);
 
+	if (count_musketeers(position) != 3)
+		return -1;
+
 	j = 0;
 	for (i = 0; i < SQUARES; ++i) {
-		switch (position->squares[i]) {
+		switch (get_square(position, i)) {
 		case MUSKETEER:
 			ms[musketeers++] = i;
 			break;
@@ -138,37 +137,33 @@ uint64_t position_to_index(struct position *position) {
 		}
 	}
 
-	if (musketeers != 3)
-		return -1;
-
-	index *= indices[enemies];
-	index += combination_to_index(p, MAX_ENEMIES, enemies);
+	index = combination_to_index(p, MAX_ENEMIES, enemies);
 
 	index *= MUSKETEER_INDICES;
-	index += musketeers_to_index[ms[0]][ms[1]][ms[2]];
+	n = 1 << (24 - ms[0]) | 1 << (24 - ms[1]) | 1 << (24 - ms[2]);
+	index += musketeers_to_index[n];
 
 	return index;
 }
 
-void index_to_position(struct position *position, int enemies, uint64_t index) {
+position_t index_to_position(position_t position, int enemies, uint64_t index) {
 	int musketeer_index;
 	int p[MAX_ENEMIES];
 	int i;
 	int j;
 
-	for (i = 0; i < SQUARES; ++i)
-		position->squares[i] = EMPTY;
+	position &= ~((1L << 50L) - 1L);
 
 	musketeer_index = index % MUSKETEER_INDICES;
 	index /= MUSKETEER_INDICES;
 
-	position->squares[index_to_musketeers[musketeer_index][0]] = MUSKETEER;
-	position->squares[index_to_musketeers[musketeer_index][1]] = MUSKETEER;
-	position->squares[index_to_musketeers[musketeer_index][2]] = MUSKETEER;
+	position |= index_to_musketeers[musketeer_index] << MUSKETEER_OFFSET;
 
 	index_to_combination(p, index, MAX_ENEMIES, enemies);
 
 	for (i = j = 0; i < SQUARES; ++i)
-		if (position->squares[i] != MUSKETEER)
-			position->squares[i] = p[j++] == 0 ? EMPTY : ENEMY;
+		if (!is_musketeer(position, i) && p[j++] == 1)
+			position = put_enemy(position, i);
+
+	return position;
 }

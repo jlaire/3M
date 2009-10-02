@@ -1,6 +1,8 @@
+#include <math.h>
+#include <stdint.h>
+
 #include "const.h"
 #include "ruleset.h"
-#include <math.h>
 
 int adjacent[SQUARES][SQUARES] = {{0}};
 
@@ -25,6 +27,7 @@ void init_adjacent(void) {
 }
 
 int adjacents[SQUARES][MAX_ADJACENTS];
+
 void init_adjacents(void) {
 	int i;
 	int j;
@@ -40,14 +43,28 @@ void init_adjacents(void) {
 	}
 }
 
-int dead_pattern_table[RULESETS][SQUARES][SQUARES][SQUARES] = {{{{0}}}};
+uint8_t count_bits_25[1 << 25] = {0};
+
+void init_count_bits_25(void) {
+	int v;
+	int c;
+	int i;
+
+	for (i = 0; i < 1 << 25; ++i) {
+		for (c = 0, v = i; v; ++c)
+			v &= v - 1;
+		count_bits_25[i] = c;
+	}
+}
+
+uint8_t dead_pattern_table[RULESETS][1 << 25] = {{0}};
 
 void init_dead_pattern_table(void) {
 	int i, i_x, i_y;
 	int j, j_x, j_y;
 	int k, k_x, k_y;
+	int n;
 
-	/* STANDARD */
 	for (i = 0; i < SQUARES; ++i) {
 		i_x = i % 5;
 		i_y = i / 5;
@@ -57,63 +74,21 @@ void init_dead_pattern_table(void) {
 			for (k = j + 1; k < SQUARES; ++k) {
 				k_x = k % 5;
 				k_y = k / 5;
+				n = 1 << (24 - i) | 1 << (24 - j) | 1 << (24 - k);
 				if (i_x == j_x && j_x == k_x ||
 				    i_y == j_y && j_y == k_y)
 				{
-					dead_pattern_table[STANDARD][i][j][k] = 1;
-					dead_pattern_table[STANDARD][i][k][j] = 1;
-					dead_pattern_table[STANDARD][j][i][k] = 1;
-					dead_pattern_table[STANDARD][j][k][i] = 1;
-					dead_pattern_table[STANDARD][k][i][j] = 1;
-					dead_pattern_table[STANDARD][k][j][i] = 1;
+					dead_pattern_table[STANDARD][n] = 1;
 				}
-			}
-		}
-	}
-
-	/* BORDER */
-	for (i = 0; i < SQUARES; ++i) {
-		i_x = i % 5;
-		i_y = i / 5;
-		for (j = i + 1; j < SQUARES; ++j) {
-			j_x = j % 5;
-			j_y = j / 5;
-			for (k = j + 1; k < SQUARES; ++k) {
-				k_x = k % 5;
-				k_y = k / 5;
 				if (i_x == j_x && j_x == k_x &&
 				    (i_x == 0 || i_x == BOARD_WIDTH - 1) ||
 				    i_y == j_y && j_y == k_y &&
 				    (i_y == 0 || i_y == BOARD_HEIGHT - 1))
 				{
-					dead_pattern_table[BORDER][i][j][k] = 1;
-					dead_pattern_table[BORDER][i][k][j] = 1;
-					dead_pattern_table[BORDER][j][i][k] = 1;
-					dead_pattern_table[BORDER][j][k][i] = 1;
-					dead_pattern_table[BORDER][k][i][j] = 1;
-					dead_pattern_table[BORDER][k][j][i] = 1;
+					dead_pattern_table[BORDER][n] = 1;
 				}
-			}
-		}
-	}
-
-	/* HORIZONTAL */
-	for (i = 0; i < SQUARES; ++i) {
-		i_x = i % 5;
-		i_y = i / 5;
-		for (j = i + 1; j < SQUARES; ++j) {
-			j_x = j % 5;
-			j_y = j / 5;
-			for (k = j + 1; k < SQUARES; ++k) {
-				k_x = k % 5;
-				k_y = k / 5;
 				if (i_x == j_x && j_x == k_x) {
-					dead_pattern_table[HORIZONTAL][i][j][k] = 1;
-					dead_pattern_table[HORIZONTAL][i][k][j] = 1;
-					dead_pattern_table[HORIZONTAL][j][i][k] = 1;
-					dead_pattern_table[HORIZONTAL][j][k][i] = 1;
-					dead_pattern_table[HORIZONTAL][k][i][j] = 1;
-					dead_pattern_table[HORIZONTAL][k][j][i] = 1;
+					dead_pattern_table[HORIZONTAL][n] = 1;
 				}
 			}
 		}

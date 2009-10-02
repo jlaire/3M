@@ -36,7 +36,10 @@ result_t result_set_depth(result_t result, int depth) {
 	return result & ~RESULT_DEPTH_MASK | depth & RESULT_DEPTH_MASK;
 }
 
-/* Musketeers can force a win in N moves */
+result_t result_inc_depth(result_t result) {
+	return result + 1;
+}
+
 int show_result(result_t result, char *string, int N) {
 	if (!result_ok(result))
 		return -1;
@@ -75,7 +78,7 @@ result_t max_result(enum player player, result_t r0, result_t r1) {
 
 #define MAX_FILENAME 18
 const char *ruleset_strs[] = {"STANDARD", "BORDER", "HORIZONTAL"};
-const char *player_strs[] = {"", "M", "E"};
+const char *player_strs[] = {"M", "E", ""};
 
 void make_filename(char *string, enum ruleset ruleset, int enemies, enum player player) {
 	sprintf(string,
@@ -98,18 +101,19 @@ void make_next_filename(char *string, enum ruleset ruleset,
 /* This is the base case. There can't be any legal moves in any
  * positions with 0 enemies, so we don't depend on earlier depths.
  */
-void solve_zero_enemies(enum ruleset ruleset, enum player player) {
+void solve_zero_enemies(enum ruleset ruleset, enum player turn) {
 	char filename[MAX_FILENAME];
 	uint64_t index;
-	struct position position;
+	position_t position;
 	FILE *out;
-	enum player temp;
+	enum player temp_player;
 	result_t result;
 
-	position.ruleset = ruleset;
-	position.player_to_move = player;
+	position = start_position;
+	position = set_ruleset(position, ruleset);
+	position = set_turn(position, turn);
 
-	make_filename(filename, ruleset, 0, player);
+	make_filename(filename, ruleset, 0, turn);
 	if ((out = fopen(filename, "wb")) == NULL) {
 		fprintf(stderr, "solve_zero_enemies: Couldn't open file %s\n", filename);
 		exit(EXIT_FAILURE);
@@ -119,20 +123,20 @@ void solve_zero_enemies(enum ruleset ruleset, enum player player) {
 	result = result_set_depth(ok_result, 0);
 
 	for (index = 0; index < indices[0]; ++index) {
-		index_to_position(&position, 0, index);
-		temp = winner(&position);
-		assert(temp == MUSKETEERS || temp == ENEMIES);
-		result = result_set_winner(result, temp);
+		position = index_to_position(position, 0, index);
+		temp_player = winner(position);
+		assert(temp_player == MUSKETEERS || temp_player == ENEMIES);
+		result = result_set_winner(result, temp_player);
 		fprintf(out, "%c", (unsigned char)result);
 	}
 
 	fclose(out);
 }
 
-void solve(enum ruleset ruleset, int enemies, enum player player) {
+void solve(enum ruleset ruleset, int enemies, enum player turn) {
 	char filename[MAX_FILENAME];
 	uint64_t index;
-	struct position position;
+	position_t position;
 	FILE *next;
 	FILE *out;
 	enum player temp_player;
@@ -140,21 +144,22 @@ void solve(enum ruleset ruleset, int enemies, enum player player) {
 	result_t temp_result;
 	result_t *next_results;
 	size_t size;
-	struct move move_list[MAX_BRANCHING];
+	move_t move_list[MAX_BRANCHING];
 	int i;
 	int n;
 
-	position.ruleset = ruleset;
-	position.player_to_move = player;
+	position = start_position;
+	position = set_ruleset(position, ruleset);
+	position = set_turn(position, turn);
 
-	make_next_filename(filename, ruleset, enemies, player);
+	make_next_filename(filename, ruleset, enemies, turn);
 	if ((next = fopen(filename, "rb")) == NULL) {
 		fprintf(stderr, "solve: Couldn't open file %s\n", filename);
 		exit(EXIT_FAILURE);
 		return;
 	}
 
-	size = indices[player == MUSKETEERS ? enemies - 1 : enemies];
+	size = indices[turn == MUSKETEERS ? enemies - 1 : enemies];
 	assert((next_results = malloc(size * sizeof(result_t))) != NULL);
 	if (fread(next_results, sizeof(result_t), size, next) != size) {
 		fprintf(stderr, "solve: Couldn't read file %s\n", filename);
@@ -164,7 +169,7 @@ void solve(enum ruleset ruleset, int enemies, enum player player) {
 
 	fclose(next);
 
-	make_filename(filename, ruleset, enemies, player);
+	make_filename(filename, ruleset, enemies, turn);
 	if ((out = fopen(filename, "wb")) == NULL) {
 		fprintf(stderr, "solve: Couldn't open file %s\n", filename);
 		exit(EXIT_FAILURE);
@@ -172,14 +177,14 @@ void solve(enum ruleset ruleset, int enemies, enum player player) {
 	}
 
 	for (index = 0; index < indices[enemies]; ++index) {
-		index_to_position(&position, enemies, index);
+		position = index_to_position(position, enemies, index);
 		result = error_result;
-		if ((temp_player = winner(&position)) != NOBODY) {
+		if ((temp_player = winner(position)) != NOBODY) {
 			result = result_set_winner(result, temp_player);
 			result = result_set_depth(result, 0);
 		}
 		else {
-			n = list_legal_moves(&position, move_list);
+			n = list_legal_moves(position, move_list);
 			for (i = 0; i < n; ++i) {
 /*				char buf[128];
 				struct position temp_pos;
@@ -189,19 +194,19 @@ void solve(enum ruleset ruleset, int enemies, enum player player) {
 				fprintf(stderr, "%s", buf);
 				show_position(&position, buf, 128);
 				fprintf(stderr, "%s", buf);*/
-				apply_move(&position, &move_list[i]);
+				position_t temp_pos = apply_move(position, move_list[i]);
 /*				show_position(&position, buf, 128);
 				fprintf(stderr, "%s\n", buf);
 				getchar();*/
-				temp_result = next_results[position_to_index(&position)];
-				result = max_result(player, result, temp_result);
-				apply_undo(&position, &move_list[i]);
+				temp_result = next_results[position_to_index(temp_pos)];
+				result = max_result(turn, result, result_inc_depth(temp_result));
 			}
 		}
 
 		fputc((int)result, out);
 	}
 
+	free(next_results);
 	fclose(out);
 }
 
@@ -219,14 +224,14 @@ void generate_database(enum ruleset ruleset) {
 	}
 }
 
-result_t lookup(struct position *position) {
+result_t lookup(position_t position) {
 	FILE *file;
 	char filename[MAX_FILENAME];
 	uint64_t index;
 	int temp;
 
-	make_filename(filename, position->ruleset,
-	              count_enemies(position), position->player_to_move);
+	make_filename(filename, get_ruleset(position),
+	              count_enemies(position), get_turn(position));
 	if ((file = fopen(filename, "rb")) == NULL) {
 		fprintf(stderr, "lookup: Couldn't open file %s\n", filename);
 		exit(EXIT_FAILURE);
