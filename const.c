@@ -7,15 +7,12 @@
 int adjacent[SQUARES][SQUARES] = {{0}};
 
 void init_adjacent(void) {
-	int i, i_x, i_y;
-	int j, j_x, j_y;
-
-	for (i = 0; i < SQUARES; ++i) {
-		i_x = i % 5;
-		i_y = i / 5;
-		for (j = 0; j < SQUARES; ++j) {
-			j_x = j % 5;
-			j_y = j / 5;
+	for (int i = 0; i < SQUARES; ++i) {
+		int i_x = i % 5;
+		int i_y = i / 5;
+		for (int j = 0; j < SQUARES; ++j) {
+			int j_x = j % 5;
+			int j_y = j / 5;
 			if (i_x == j_x && fabs(i_y - j_y) == 1 ||
 			    i_y == j_y && fabs(i_x - j_x) == 1)
 			{
@@ -26,55 +23,39 @@ void init_adjacent(void) {
 	}
 }
 
-int adjacents[SQUARES][MAX_ADJACENTS];
+int neighbours[SQUARES][MAX_NEIGHBOURS];
 
-void init_adjacents(void) {
-	int i;
-	int j;
-	int k;
-
-	for (i = 0; i < SQUARES; ++i) {
-		k = 0;
-		for (j = 0; j < SQUARES; ++j)
+void init_neighbours(void) {
+	for (int i = 0; i < SQUARES; ++i) {
+		int k = 0;
+		for (int j = 0; j < SQUARES; ++j)
 			if (adjacent[i][j])
-				adjacents[i][k++] = j;
-		for (; k < MAX_ADJACENTS; ++k)
-			adjacents[i][k] = -1;
+				neighbours[i][k++] = j;
+		for (; k < MAX_NEIGHBOURS; ++k)
+			neighbours[i][k] = -1;
 	}
 }
 
-uint8_t count_bits_25[1 << 25] = {0};
-
-void init_count_bits_25(void) {
-	int v;
-	int c;
-	int i;
-
-	for (i = 0; i < 1 << 25; ++i) {
-		for (c = 0, v = i; v; ++c)
-			v &= v - 1;
-		count_bits_25[i] = c;
-	}
+unsigned int count_bits_25(unsigned int n) {
+	unsigned int c;
+	for (c = 0; n; ++c)
+		n &= n - 1;
+	return c;
 }
 
 uint8_t dead_pattern_table[RULESETS][1 << 25] = {{0}};
 
 void init_dead_pattern_table(void) {
-	int i, i_x, i_y;
-	int j, j_x, j_y;
-	int k, k_x, k_y;
-	int n;
-
-	for (i = 0; i < SQUARES; ++i) {
-		i_x = i % 5;
-		i_y = i / 5;
-		for (j = i + 1; j < SQUARES; ++j) {
-			j_x = j % 5;
-			j_y = j / 5;
-			for (k = j + 1; k < SQUARES; ++k) {
-				k_x = k % 5;
-				k_y = k / 5;
-				n = 1 << (24 - i) | 1 << (24 - j) | 1 << (24 - k);
+	for (int i = 0; i < SQUARES; ++i) {
+		int i_x = i % 5;
+		int i_y = i / 5;
+		for (int j = i + 1; j < SQUARES; ++j) {
+			int j_x = j % 5;
+			int j_y = j / 5;
+			for (int k = j + 1; k < SQUARES; ++k) {
+				int k_x = k % 5;
+				int k_y = k / 5;
+				int n = 1 << (24 - i) | 1 << (24 - j) | 1 << (24 - k);
 				if (i_x == j_x && j_x == k_x ||
 				    i_y == j_y && j_y == k_y)
 				{

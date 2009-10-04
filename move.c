@@ -1,25 +1,9 @@
 #include "const.h"
 #include "move.h"
 
-int move_get_from(move_t move) {
-	return move >> 8;
-}
-
-int move_get_to(move_t move) {
-	return move & MOVE_TO_MASK;
-}
-
-move_t move_set_from(move_t move, int from) {
-	return move & MOVE_TO_MASK | from << 8;
-}
-
-move_t move_set_to(move_t move, int to) {
-	return move & MOVE_FROM_MASK | to;
-}
-
 int move_valid(move_t move) {
-	int from = move_get_from(move);
-	int to = move_get_to(move);
+	square_t from = move_get_from(move);
+	square_t to = move_get_to(move);
 	return	SQUARE_VALID(from) &&
 		SQUARE_VALID(to) &&
 		adjacent[from][to];
@@ -29,35 +13,32 @@ int move_valid(move_t move) {
 #define RANK_CHAR(c) ('1' <= (c) && (c) < '1' + BOARD_HEIGHT)
 
 /* [a-e][1-5] */
-int read_square(int *square, char *string) {
-	int i = 0;
+int read_square(square_t *square, char *string) {
+	unsigned int len = 0;
 
-	for (; !FILE_CHAR(string[i]); ++i)
-		if (string[i] == '\0')
+	for (; !FILE_CHAR(string[len]); ++len)
+		if (string[len] == '\0')
 			return -1;
 
-	*square = string[i++] - 'a';
+	*square = string[len++] - 'a';
 
-	for (; !RANK_CHAR(string[i]); ++i)
-		if (string[i] == '\0')
+	for (; !RANK_CHAR(string[len]); ++len)
+		if (string[len] == '\0')
 			return -1;
 
-	*square += (string[i++] - '1') * BOARD_WIDTH;
-	return i;
+	*square += (string[len++] - '1') * BOARD_WIDTH;
+	return len;
 }
 
 /* <from-square> <to-square> */
 int read_move(move_t *move, char *string) {
-	int len_from;
-	int len_to;
-	int from;
-	int to;
-
-	len_from = read_square(&from, string);
+	square_t from;
+	int len_from = read_square(&from, string);
 	if (len_from < 0)
 		return len_from;
 
-	len_to = read_square(&to, string + len_from);
+	square_t to;
+	int len_to = read_square(&to, string + len_from);
 	if (len_to < 0)
 		return len_to;
 
@@ -70,7 +51,7 @@ int read_move(move_t *move, char *string) {
 	return len_from + len_to;
 }
 
-int show_square(int square, char *string, int N) {
+int show_square(square_t square, char *string, int N) {
 	if (!SQUARE_VALID(square))
 		return -1;
 	if (N < 3)
@@ -84,19 +65,18 @@ int show_square(int square, char *string, int N) {
 }
 
 int show_move(move_t move, char *string, int N) {
-	int len_from;
-	int len_to;
-
 	if (!move_valid(move))
 		return -1;
 
-	len_from = show_square(move_get_from(move), string, N);
+	int len_from = show_square(move_get_from(move), string, N);
 	if (len_from < 0)
 		return len_from;
 
 	string[len_from] = '-';
 
-	len_to = show_square(move_get_to(move), string + len_from + 1, N - len_from - 1);
+	int len_to = show_square(move_get_to(move),
+	                         string + len_from + 1,
+	                         N - len_from - 1);
 	if (len_to < 0)
 		return len_to;
 

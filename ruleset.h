@@ -18,6 +18,6 @@
  * +-+-+-+-+   +-------+   ---------
  * STANDARD     BORDER     HORIZONTAL
  */
-enum ruleset { STANDARD, BORDER, HORIZONTAL };
+enum ruleset {STANDARD, BORDER, HORIZONTAL};
 
 #endif

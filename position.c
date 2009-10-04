@@ -14,73 +14,6 @@ char square_char[] = {CHAR_MUSKETEER, CHAR_ENEMY, CHAR_EMPTY};
 position_t start_position;
 position_t error_position;
 
-enum ruleset get_ruleset(position_t position) {
-	return (position & RULESET_MASK) >> RULESET_OFFSET;
-}
-
-position_t set_ruleset(position_t position, enum ruleset ruleset) {
-	return position & ~RULESET_MASK | (uint64_t)ruleset << RULESET_OFFSET;
-}
-
-enum player get_turn(position_t position) {
-	return (position & TURN_BIT) >> TURN_OFFSET;
-}
-
-position_t set_turn(position_t position, enum player player) {
-	return position & ~TURN_BIT | (uint64_t)player << TURN_OFFSET;
-}
-
-position_t put_musketeer(position_t position, int i) {
-	return position | MUSKETEER_BIT(i);
-}
-
-position_t remove_musketeer(position_t position, int i) {
-	return position & ~MUSKETEER_BIT(i);
-}
-
-position_t put_enemy(position_t position, int i) {
-	return position | ENEMY_BIT(i);
-}
-
-position_t remove_enemy(position_t position, int i) {
-	return position & ~ENEMY_BIT(i);
-}
-
-position_t set_empty(position_t position, int i) {
-	return remove_musketeer(remove_enemy(position, i), i);
-}
-
-enum square get_square(position_t position, int i) {
-	return is_musketeer(position, i) ? MUSKETEER :
-	       is_enemy(position, i) ? ENEMY :
-	       EMPTY;
-}
-
-position_t set_square(position_t position, int i, enum square square) {
-	position = set_empty(position, i);
-	switch (square) {
-		case MUSKETEER: return put_musketeer(position, i);
-		case ENEMY: return put_enemy(position, i);
-		default: return position;
-	}
-}
-
-uint64_t is_musketeer(position_t position, int i) {
-	return position & MUSKETEER_BIT(i);
-}
-
-uint64_t is_enemy(position_t position, int i) {
-	return position & ENEMY_BIT(i);
-}
-
-uint64_t is_empty(position_t position, int i) {
-	return !is_musketeer(position, i) && !is_enemy(position, i);
-}
-
-uint64_t position_ok(position_t position) {
-	return !(position & ERROR_BIT);
-}
-
 void init_positions(void) {
 	int i;
 
@@ -100,14 +33,6 @@ void init_positions(void) {
 	error_position = ERROR_BIT;
 }
 
-int count_musketeers(position_t position) {
-	return count_bits_25[(position & MUSKETEER_MASK) >> MUSKETEER_OFFSET];
-}
-
-int count_enemies(position_t position) {
-	return count_bits_25[(position & ENEMY_MASK) >> ENEMY_OFFSET];
-}
-
 #define RULESET_CHAR(c) ((c) == 'S' || (c) == 'B' || (c) == 'H')
 #define PLAYER_CHAR(c) ((c) == 'M' || (c) == 'E')
 #define SQUARE_CHAR(c) ((c) == CHAR_MUSKETEER ||\
@@ -117,34 +42,31 @@ int count_enemies(position_t position) {
 /* [SBH] [ME] [.OX]{25} */
 int read_position(position_t *position, char *string) {
 	int i = 0;
-	enum ruleset ruleset;
-	enum player player;
-	enum square square;
 
 	for (; !RULESET_CHAR(string[i]); ++i)
 		if (string[i] == '\0')
 			return -1;
 
-	ruleset = string[i] == 'B' ? BORDER :
-	          string[i] == 'H' ? HORIZONTAL :
-	          STANDARD;
+	enum ruleset ruleset = string[i] == 'B' ? BORDER :
+	                       string[i] == 'H' ? HORIZONTAL :
+	                       STANDARD;
 	*position = set_ruleset(*position, ruleset);
 
 	for (++i; !PLAYER_CHAR(string[i]); ++i)
 		if (string[i] == '\0')
 			return -1;
 
-	player = string[i] == 'M' ? MUSKETEERS : ENEMIES;
-	*position = set_turn(*position, player);
+	enum player turn = string[i] == 'M' ? MUSKETEERS : ENEMIES;
+	*position = set_turn(*position, turn);
 
-	for (square = 0; square < SQUARES; ++square) {
+	for (int j = 0; j < SQUARES;) {
 		for (++i; !SQUARE_CHAR(string[i]); ++i)
 			if (string[i] == '\0')
 				return -1;
-		square = string[i] == CHAR_EMPTY ? EMPTY :
-		         string[i] == CHAR_MUSKETEER ? MUSKETEER :
-		         ENEMY;
-		*position = set_square(*position, i, square);
+		enum square square = string[i] == CHAR_EMPTY ? EMPTY :
+		                     string[i] == CHAR_MUSKETEER ? MUSKETEER :
+		                     ENEMY;
+		*position = set_square(*position, j++, square);
 	}
 
 	return i;
@@ -160,12 +82,7 @@ int read_position(position_t *position, char *string) {
  * Musketeers to move
  */
 int show_position(position_t position, char *string, int N) {
-	int y;
-	int x;
-	int len;
-	enum player player;
-
-	len = 12 + 5 * 14 + 12;
+	int len = 12 + 5 * 14 + 12;
 	if (N < len + 20)
 		return -2;
 
@@ -178,7 +95,7 @@ int show_position(position_t position, char *string, int N) {
 		"5 ? ? ? ? ? 5\n"
 		"  a b c d e\n");
 
-	player = winner(position);
+	enum player player = winner(position);
 	if (player == NOBODY) {
 		if (get_turn(position) == MUSKETEERS) {
 			strcpy(string + len, "Musketeers to move\n");
@@ -202,8 +119,8 @@ int show_position(position_t position, char *string, int N) {
 	else
 		return -1;
 
-	for (y = 0; y < BOARD_HEIGHT; ++y) {
-		for (x = 0; x < BOARD_WIDTH; ++x) {
+	for (int y = 0; y < BOARD_HEIGHT; ++y) {
+		for (int x = 0; x < BOARD_WIDTH; ++x) {
 			int i = y * BOARD_WIDTH + x;
 			enum square square = get_square(position, i);
 			string[14 + y * 14 + x * 2] = square_char[square];
@@ -213,15 +130,15 @@ int show_position(position_t position, char *string, int N) {
 	return len;
 }
 
-int dead_pattern(position_t position) {
+inline int dead_pattern(position_t position) {
 	enum ruleset ruleset = get_ruleset(position);
 	uint64_t n = (position & MUSKETEER_MASK) >> MUSKETEER_OFFSET;
 	return dead_pattern_table[ruleset][n];
 }
 
 int move_legal(position_t position, move_t move) {
-	int from = move_get_from(move);
-	int to = move_get_to(move);
+	square_t from = move_get_from(move);
+	square_t to = move_get_to(move);
 
 	enum player turn = get_turn(position);
 
@@ -234,15 +151,16 @@ int move_legal(position_t position, move_t move) {
 }
 
 int undo_legal(position_t position, move_t undo) {
-	int from = move_get_from(undo);
-	int to = move_get_to(undo);
+	square_t from = move_get_from(undo);
+	square_t to = move_get_to(undo);
 	enum player turn = get_turn(position);
 
-	if (turn == MUSKETEERS)
+	if (turn == MUSKETEERS) {
 		if (!is_empty(position, from) || !is_enemy(position, to))
 			return 0;
 		if (dead_pattern(position))
 			return 0;
+	}
 	else {
 		if (!is_empty(position, from) || !is_musketeer(position, to))
 			return 0;
@@ -255,20 +173,20 @@ int undo_legal(position_t position, move_t undo) {
 	return 1;
 }
 
-int move_legal_safe(position_t position, move_t move) {
+int move_valid_and_legal(position_t position, move_t move) {
 	return move_valid(move) &&
 	       !dead_pattern(position) &&
 	       move_legal(position, move);
 }
 
-int undo_legal_safe(position_t position, move_t undo) {
+int undo_valid_and_legal(position_t position, move_t undo) {
 	return move_valid(undo) &&
 	       undo_legal(position, undo);
 }
 
 position_t apply_move(position_t position, move_t move) {
-	int from = move_get_from(move);
-	int to = move_get_to(move);
+	square_t from = move_get_from(move);
+	square_t to = move_get_to(move);
 
 	if (get_turn(position) == MUSKETEERS) {
 		position = remove_musketeer(position, from);
@@ -286,8 +204,8 @@ position_t apply_move(position_t position, move_t move) {
 }
 
 position_t apply_undo(position_t position, move_t undo) {
-	int from = move_get_from(undo);
-	int to = move_get_to(undo);
+	square_t from = move_get_from(undo);
+	square_t to = move_get_to(undo);
 
 	if (get_turn(position) == MUSKETEERS) {
 		position = remove_enemy(position, to);
@@ -305,34 +223,32 @@ position_t apply_undo(position_t position, move_t undo) {
 }
 
 int list_legal_moves(position_t position, move_t *moves) {
-	int count = 0;
-	int i;
-	int j;
-
 	if (dead_pattern(position))
 		return 0;
 
+	int count = 0;
+
 	if (get_turn(position) == MUSKETEERS) {
-		for (i = 0; i < SQUARES; ++i) {
+		for (square_t i = 0; i < SQUARES; ++i) {
 			if (!is_musketeer(position, i))
 				continue;
-			for (j = 0; j < MAX_ADJACENTS && adjacents[i][j] >= 0; ++j) {
-				if (is_enemy(position, adjacents[i][j])) {
+			for (square_t j = 0; j < MAX_NEIGHBOURS && neighbours[i][j] >= 0; ++j) {
+				if (is_enemy(position, neighbours[i][j])) {
 					moves[count] = move_set_from(0, i);
-					moves[count] = move_set_to(moves[count], adjacents[i][j]);
+					moves[count] = move_set_to(moves[count], neighbours[i][j]);
 					++count;
 				}
 			}
 		}
 	}
 	else {
-		for (i = 0; i < SQUARES; ++i) {
+		for (square_t i = 0; i < SQUARES; ++i) {
 			if (!is_enemy(position, i))
 				continue;
-			for (j = 0; j < MAX_ADJACENTS && adjacents[i][j] >= 0; ++j) {
-				if (is_empty(position, adjacents[i][j])) {
+			for (square_t j = 0; j < MAX_NEIGHBOURS && neighbours[i][j] >= 0; ++j) {
+				if (is_empty(position, neighbours[i][j])) {
 					moves[count] = move_set_from(0, i);
-					moves[count] = move_set_to(moves[count], adjacents[i][j]);
+					moves[count] = move_set_to(moves[count], neighbours[i][j]);
 					++count;
 				}
 			}
@@ -344,36 +260,33 @@ int list_legal_moves(position_t position, move_t *moves) {
 
 int list_legal_undos(position_t position, move_t *undos) {
 	int count = 0;
-	int i;
-	int j;
-	position_t temp;
 
 	if (get_turn(position) == MUSKETEERS) {
 		if (dead_pattern(position))
 			return 0;
-		for (i = 0; i < SQUARES; ++i) {
+		for (square_t i = 0; i < SQUARES; ++i) {
 			if (!is_empty(position, i))
 				continue;
-			for (j = 0; j < MAX_ADJACENTS && adjacents[i][j] >= 0; ++j) {
-				if (is_enemy(position, adjacents[i][j])) {
+			for (square_t j = 0; j < MAX_NEIGHBOURS && neighbours[i][j] >= 0; ++j) {
+				if (is_enemy(position, neighbours[i][j])) {
 					undos[count] = move_set_from(0, i);
-					undos[count] = move_set_to(undos[count], adjacents[i][j]);
+					undos[count] = move_set_to(undos[count], neighbours[i][j]);
 					++count;
 				}
 			}
 		}
 	}
 	else {
-		for (i = 0; i < SQUARES; ++i) {
+		for (square_t i = 0; i < SQUARES; ++i) {
 			if (!is_empty(position, i))
 				continue;
-			for (j = 0; j < MAX_ADJACENTS && adjacents[i][j] >= 0; ++j) {
-				if (is_musketeer(position, adjacents[i][j])) {
+			for (square_t j = 0; j < MAX_NEIGHBOURS && neighbours[i][j] >= 0; ++j) {
+				if (is_musketeer(position, neighbours[i][j])) {
 					undos[count] = move_set_from(0, i);
-					undos[count] = move_set_to(undos[count], adjacents[i][j]);
-					temp = position;
+					undos[count] = move_set_to(undos[count], neighbours[i][j]);
+					position_t temp = position;
 					temp = put_musketeer(temp, i);
-					temp = remove_musketeer(temp, adjacents[i][j]);
+					temp = remove_musketeer(temp, neighbours[i][j]);
 					if (!dead_pattern(temp))
 						++count;
 				}
@@ -385,17 +298,14 @@ int list_legal_undos(position_t position, move_t *undos) {
 }
 
 int enemies_can_move(position_t position) {
-	int i;
-	int j;
-
 	if (get_turn(position) != ENEMIES || dead_pattern(position))
 		return 0;
 
-	for (i = 0; i < SQUARES; ++i) {
+	for (square_t i = 0; i < SQUARES; ++i) {
 		if (!is_enemy(position, i))
 			continue;
-		for (j = 0; j < MAX_ADJACENTS && adjacents[i][j] >= 0; ++j)
-			if (is_empty(position, adjacents[i][j]))
+		for (square_t j = 0; j < MAX_NEIGHBOURS && neighbours[i][j] >= 0; ++j)
+			if (is_empty(position, neighbours[i][j]))
 				return 1;
 	}
 
@@ -403,17 +313,14 @@ int enemies_can_move(position_t position) {
 }
 
 int musketeers_can_move(position_t position) {
-	int i;
-	int j;
-
 	if (get_turn(position) != MUSKETEERS || dead_pattern(position))
 		return 0;
 
-	for (i = 0; i < SQUARES; ++i) {
+	for (square_t i = 0; i < SQUARES; ++i) {
 		if (!is_musketeer(position, i))
 			continue;
-		for (j = 0; j < MAX_ADJACENTS && adjacents[i][j] >= 0; ++j)
-			if (is_enemy(position, adjacents[i][j]))
+		for (square_t j = 0; j < MAX_NEIGHBOURS && neighbours[i][j] >= 0; ++j)
+			if (is_enemy(position, neighbours[i][j]))
 				return 1;
 	}
 
