@@ -27,17 +27,13 @@ int main(void) {
 	for (;;) {
 		show_position(position, buf, BUF_SIZE);
 		fprintf(stderr, "%s", buf);
-/*		if (result_ok(result = lookup(position))) {
-			show_result(result, buf, BUF_SIZE);
-			fprintf(stderr, "%s\n", buf);
-		}*/
 
 		move_t move_list[MAX_BRANCHING];
 		int n = list_legal_moves(position, move_list);
 		fprintf(stderr, "[");
 		for (int i = 0; i < n; ++i) {
-			int temp;
-			if ((temp = show_move(move_list[i], buf, BUF_SIZE)) < 0) {
+			int temp = show_move(move_list[i], buf, BUF_SIZE);
+			if (temp < 0) {
 				fprintf(stderr, "ERROR: %d\n", temp);
 				return EXIT_FAILURE;
 			}
@@ -66,6 +62,7 @@ int main(void) {
 		move_t move;
 
 		if (buf[0] == '?') {
+			solve(position);
 			result_t result = lookup(position);
 			if (result_ok(result)) {
 				show_result(result, buf, BUF_SIZE);
@@ -76,7 +73,7 @@ int main(void) {
 
 		if (buf[0] == '<') {
 			int temp = read_move(&move, buf + 1);
-			if (temp < 0 || !undo_legal(position, move)) {
+			if (temp < 0 || !undo_valid_and_legal(position, move)) {
 				fprintf(stderr, "Illegal undo\n");
 				continue;
 			}
@@ -92,7 +89,7 @@ int main(void) {
 		}
 
 		int temp = read_move(&move, buf);
-		if (temp < 0 || !move_legal(position, move)) {
+		if (temp < 0 || !move_valid_and_legal(position, move)) {
 			fprintf(stderr, "Illegal move\n");
 			continue;
 		}

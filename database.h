@@ -51,6 +51,8 @@ int generate_file(enum ruleset ruleset, int enemies, enum player turn);
 /* Returns 0 on success, -1 on failure */
 int generate_database(enum ruleset ruleset);
 
+void solve(position_t position);
+
 /* Returns error_result on error */
 result_t lookup(position_t position);
 

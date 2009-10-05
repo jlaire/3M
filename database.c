@@ -21,10 +21,12 @@ int show_result(result_t result, char *string, int N) {
 	if (N < 39)
 		return -2;
 
-	return sprintf(string, "%s can force a win in %d moves",
+	int depth = result_get_depth(result);
+	return sprintf(string, "%s can force a win in %d move%s",
 	               result_get_winner(result) == MUSKETEERS ?
 	                   "Musketeers" : "Enemies",
-	               result_get_depth(result));
+	               depth,
+	               depth == 1 ? "" : "s");
 }
 
 result_t max_result(enum player player, result_t r0, result_t r1) {
@@ -214,12 +216,19 @@ int generate_database(enum ruleset ruleset) {
 	return 0;
 }
 
-result_t lookup(position_t position) {
+void solve(position_t position) {
 	enum ruleset ruleset = get_ruleset(position);
 	int enemies = count_enemies(position);
 	enum player turn = get_turn(position);
 
 	generate_file(ruleset, enemies, turn);
+}
+
+result_t lookup(position_t position) {
+	enum ruleset ruleset = get_ruleset(position);
+	int enemies = count_enemies(position);
+	enum player turn = get_turn(position);
+
 	char filename[MAX_FILENAME];
 	make_filename(filename, ruleset, enemies, turn);
 
