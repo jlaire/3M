@@ -71,6 +71,11 @@ int main(void) {
 			goto READ_INPUT;
 		}
 
+		if (buf[0] == '@') {
+			generate_database(get_ruleset(position));
+			continue;
+		}
+
 		if (buf[0] == '<') {
 			int temp = read_move(&move, buf + 1);
 			if (temp < 0 || !undo_valid_and_legal(position, move)) {

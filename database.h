@@ -42,6 +42,11 @@ result_t max_result(enum player player, result_t r0, result_t r1);
  */
 int show_result(result_t result, char *string, int N);
 
+/* Returns the number of characters written on success,
+ * -2 if the buffer is too short
+ */
+int show_result_short(result_t result, char *string, int N);
+
 /* Returns 0 on success, -1 on failure */
 int generate_file_zero_enemies(enum ruleset ruleset, enum player turn);
 
@@ -55,6 +60,10 @@ void solve(position_t position);
 
 /* Returns error_result on error */
 result_t lookup(position_t position);
+
+/********************/
+/* inline functions */
+/********************/
 
 inline int result_ok(result_t result) {
 	return (result & RESULT_ERROR_BIT) == 0;

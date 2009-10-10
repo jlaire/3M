@@ -68,7 +68,7 @@ void init_dead_pattern_table(void) {
 				{
 					dead_pattern_table[BORDER][n] = 1;
 				}
-				if (i_x == j_x && j_x == k_x) {
+				if (i_y == j_y && j_y == k_y) {
 					dead_pattern_table[HORIZONTAL][n] = 1;
 				}
 			}

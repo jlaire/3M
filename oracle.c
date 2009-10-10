@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "const.h"
 #include "ruleset.h"
@@ -22,21 +23,12 @@ int main(void) {
 	while (fgets(buf, BUF_SIZE, stdin) != NULL) {
 		position_t position;
 		if (read_position(&position, buf) < 0) {
-			printf("Parse error\n");
+			printf("Invalid position\n");
 			continue;
 		}
 
 		result_t result = lookup(position);
-		if (!result_ok(result)) {
-			printf("lookup failed\n");
-			continue;
-		}
-
-		if (show_result(result, buf, BUF_SIZE) < 0) {
-			printf("wat\n");
-			continue;
-		}
-
+		assert(show_result_short(result, buf, BUF_SIZE) >= 0);
 		printf("%s\n", buf);
 	}
 

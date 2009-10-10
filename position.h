@@ -86,6 +86,10 @@ int list_legal_undos(position_t position, move_t *undos);
 /* If the game is over, returns MUSKETEERS or ENEMIES -- if not, NOBODY */
 enum player winner(position_t position);
 
+/********************/
+/* inline functions */
+/********************/
+
 inline enum ruleset get_ruleset(position_t position) {
 	return (position & RULESET_MASK) >> RULESET_OFFSET;
 }
