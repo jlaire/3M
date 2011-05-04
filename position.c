@@ -15,9 +15,7 @@ position_t start_position;
 position_t error_position;
 
 void init_positions(void) {
-	int i;
-
-	static enum square start_squares[SQUARES] = {
+	static const enum square start_squares[SQUARES] = {
 		ENEMY, ENEMY, ENEMY, ENEMY, MUSKETEER,
 		ENEMY, ENEMY, ENEMY, ENEMY, ENEMY,
 		ENEMY, ENEMY, MUSKETEER, ENEMY, ENEMY,
@@ -27,7 +25,7 @@ void init_positions(void) {
 
 	start_position = set_turn(0, MUSKETEERS);
 	start_position = set_ruleset(start_position, STANDARD);
-	for (i = 0; i < SQUARES; ++i)
+	for (int i = 0; i < SQUARES; ++i)
 		start_position = set_square(start_position, i, start_squares[i]);
 
 	error_position = ERROR_BIT;
