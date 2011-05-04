@@ -136,7 +136,7 @@ static int generate_file_zero_enemies(enum ruleset rs, enum player turn) {
 	return 0;
 }
 
-static nt generate_file(enum ruleset rs, int enemies, enum player turn) {
+static int generate_file(enum ruleset rs, int enemies, enum player turn) {
 	if (enemies == 0)
 		return generate_file_zero_enemies(rs, turn);
 
