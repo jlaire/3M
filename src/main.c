@@ -108,6 +108,36 @@ static void create_db(void) {
 	generate_database(HORIZONTAL);
 }
 
+static void batch_mode(void) {
+	char line[BUF_SIZE];
+	while (fgets(line, BUF_SIZE, stdin) != NULL) {
+		position_t position;
+		if (read_position(&position, line) == -1) {
+			printf("ERROR\n");
+			continue;
+		}
+		result_t result = lookup(position);
+		char out[BUF_SIZE] = {0};
+		int outlen = show_result(result, out, BUF_SIZE);
+		out[outlen++] = ' ';
+		out[outlen++] = '-';
+		out[outlen++] = '>';
+		out[outlen++] = ' ';
+		move_t moves[MAX_BRANCHING];
+		int move_count = list_legal_moves(position, moves);
+		for (int i = 0; i < move_count; ++i) {
+			result_t result = lookup(apply_move(position, moves[i]));
+			if (i > 0) {
+				out[outlen++] = ',';
+				out[outlen++] = ' ';
+			}
+			outlen += show_move(moves[i], out + outlen, BUF_SIZE - outlen);
+			outlen += show_result_short(result, out + outlen, BUF_SIZE - outlen);
+		}
+		printf("%s\n", out);
+	}
+}
+
 static void usage(void) {
 	printf("Usage: ./3M [-g] [-i|-s]\n"
 	       "\t-g\tGenerate databases for optimal AI\n"
@@ -165,7 +195,7 @@ int main(int argc, char *argv[]) {
 	if (option_i)
 		repl();
 	if (option_s)
-		fprintf(stderr, "-s: TODO\n");
+		batch_mode();
 
 	return EXIT_SUCCESS;
 }

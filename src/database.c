@@ -68,7 +68,7 @@ result_t max_result(enum player player, result_t r0, result_t r1) {
 }
 
 #define MAX_FILENAME 18
-static const char database_dir[] = "DB";
+static const char database_dir[] = "data";
 static const char *ruleset_strs[] = {"STANDARD", "BORDER", "HORIZONTAL"};
 static const char *player_strs[] = {"M", "E", ""};
 
