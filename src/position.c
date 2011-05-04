@@ -1,7 +1,6 @@
 #include <string.h>
 
 #include "const.h"
-#include "ruleset.h"
 #include "move.h"
 #include "position.h"
 
@@ -24,33 +23,22 @@ void init_positions(void) {
 	};
 
 	start_position = set_turn(0, MUSKETEERS);
-	start_position = set_ruleset(start_position, STANDARD);
 	for (int i = 0; i < SQUARES; ++i)
 		start_position = set_square(start_position, i, start_squares[i]);
 
 	error_position = ERROR_BIT;
 }
 
-#define RULESET_CHAR(c) ((c) == 'S' || (c) == 'B' || (c) == 'H')
 #define PLAYER_CHAR(c) ((c) == 'M' || (c) == 'E')
 #define SQUARE_CHAR(c) ((c) == CHAR_MUSKETEER ||\
                         (c) == CHAR_ENEMY ||\
                         (c) == CHAR_EMPTY)
 
-/* [SBH] [ME] [.OX]{25} */
+/* [ME] [.OX]{25} */
 int read_position(position_t *position, char *string) {
 	int i = 0;
 
-	for (; !RULESET_CHAR(string[i]); ++i)
-		if (string[i] == '\0')
-			return -1;
-
-	enum ruleset ruleset = string[i] == 'B' ? BORDER :
-	                       string[i] == 'H' ? HORIZONTAL :
-	                       STANDARD;
-	*position = set_ruleset(*position, ruleset);
-
-	for (++i; !PLAYER_CHAR(string[i]); ++i)
+	for (; !PLAYER_CHAR(string[i]); ++i)
 		if (string[i] == '\0')
 			return -1;
 
@@ -129,9 +117,8 @@ int show_position(position_t position, char *string, int N) {
 }
 
 inline int dead_pattern(position_t position) {
-	enum ruleset ruleset = get_ruleset(position);
 	uint64_t n = (position & MUSKETEER_MASK) >> MUSKETEER_OFFSET;
-	return dead_pattern_table[ruleset][n];
+	return dead_pattern_table[n];
 }
 
 int move_legal(position_t position, move_t move) {

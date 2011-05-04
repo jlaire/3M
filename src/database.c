@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 
 #include "const.h"
-#include "ruleset.h"
 #include "position.h"
 #include "indexing.h"
 #include "database.h"
@@ -67,16 +66,13 @@ result_t max_result(enum player player, result_t r0, result_t r1) {
 	}
 }
 
-#define MAX_FILENAME 18
-static const char database_dir[] = "data";
-static const char *ruleset_strs[] = {"STANDARD", "BORDER", "HORIZONTAL"};
-static const char *player_strs[] = {"M", "E", ""};
-
-static void make_filename(char *string, enum ruleset ruleset, int enemies, enum player player) {
+#define MAX_FILENAME 8
+static void make_filename(char *string, int enemies, enum player player) {
+	static const char database_dir[] = "data";
+	static const char *player_strs[] = {"M", "E", ""};
 	sprintf(string,
-	        "%s/%s/%02d%s",
+	        "%s/%02d%s",
 		database_dir,
-	        ruleset_strs[ruleset],
 	        enemies,
 	        player_strs[player]);
 }
@@ -100,28 +96,27 @@ static uint64_t file_size(const char *filename) {
 }
 
 /* This is the base case. There can't be any legal moves without enemies */
-static int generate_file_zero_enemies(enum ruleset rs, enum player turn) {
+static int generate_file_zero_enemies(enum player turn) {
 	position_t position = start_position;
-	position = set_ruleset(position, rs);
 	position = set_turn(position, turn);
 
 	char filename[MAX_FILENAME];
-	make_filename(filename, rs, 0, turn);
+	make_filename(filename, 0, turn);
 
-	if (file_size(filename) == indices[rs][0])
+	if (file_size(filename) == indices[0])
 		return 0;
 
-	fprintf(stderr, "Generating file %s\n", filename);
+	fprintf(stderr, "Generating file %s...", filename);
 
 	FILE *out;
 	if ((out = fopen(filename, "ab")) == NULL) {
-		fprintf(stderr, "generate_file_zero_enemies: Couldn't open file %s\n", filename);
+		fprintf(stderr, "generate_file_zero_enemies: Couldn't open file %s for writing\n", filename);
 		return -1;
 	}
 
 	result_t result = result_set_depth(ok_result, 0);
 
-	for (uint64_t index = file_size(filename); index < indices[rs][0]; ++index) {
+	for (uint64_t index = file_size(filename); index < indices[0]; ++index) {
 		position = index_to_position(position, 0, index);
 		enum player temp = winner(position);
 		assert(temp == MUSKETEERS || temp == ENEMIES);
@@ -131,27 +126,27 @@ static int generate_file_zero_enemies(enum ruleset rs, enum player turn) {
 
 	fclose(out);
 
-	fprintf(stderr, "File %s is done\n", filename);
+	fprintf(stderr, " done\n");
 
 	return 0;
 }
 
-static int generate_file(enum ruleset rs, int enemies, enum player turn) {
+static int generate_file(int enemies, enum player turn) {
 	if (enemies == 0)
-		return generate_file_zero_enemies(rs, turn);
+		return generate_file_zero_enemies(turn);
 
 	char filename[MAX_FILENAME];
-	make_filename(filename, rs, enemies, turn);
-	if (file_size(filename) == indices[rs][enemies])
+	make_filename(filename, enemies, turn);
+	if (file_size(filename) == indices[enemies])
 		return 0;
 
 	int next_enemies = get_next_enemies(enemies, turn);
 	enum player next_turn = get_next_turn(turn);
 	char next_filename[MAX_FILENAME];
-	make_filename(next_filename, rs, next_enemies, next_turn);
+	make_filename(next_filename, next_enemies, next_turn);
 
-	if (file_size(next_filename) != indices[rs][next_enemies])
-		generate_file(rs, next_enemies, next_turn);
+	if (file_size(next_filename) != indices[next_enemies])
+		generate_file( next_enemies, next_turn);
 
 	FILE *next;
 	if ((next = fopen(next_filename, "rb")) == NULL) {
@@ -159,9 +154,9 @@ static int generate_file(enum ruleset rs, int enemies, enum player turn) {
 		return -1;
 	}
 
-	size_t size = indices[rs][turn == MUSKETEERS ? enemies - 1 : enemies];
-	result_t *next_results;
-	assert((next_results = malloc(size * sizeof(result_t))) != NULL);
+	size_t size = indices[turn == MUSKETEERS ? enemies - 1 : enemies];
+	result_t *next_results = malloc(size * sizeof *next_results);
+	assert(next_results != NULL);
 	if (fread(next_results, sizeof(result_t), size, next) != size) {
 		fprintf(stderr, "generate_file: Couldn't read file %s\n", next_filename);
 		free(next_results);
@@ -171,7 +166,7 @@ static int generate_file(enum ruleset rs, int enemies, enum player turn) {
 
 	fclose(next);
 
-	make_filename(filename, rs, enemies, turn);
+	make_filename(filename, enemies, turn);
 
 	fprintf(stderr, "Generating file %s...", filename);
 	fflush(stderr);
@@ -182,10 +177,9 @@ static int generate_file(enum ruleset rs, int enemies, enum player turn) {
 	}
 
 	position_t position = start_position;
-	position = set_ruleset(position, rs);
 	position = set_turn(position, turn);
 
-	for (uint64_t index = file_size(filename); index < indices[rs][enemies]; ++index) {
+	for (uint64_t index = file_size(filename); index < indices[enemies]; ++index) {
 		position = index_to_position(position, enemies, index);
 		result_t result = error_result;
 		enum player temp;
@@ -214,12 +208,12 @@ static int generate_file(enum ruleset rs, int enemies, enum player turn) {
 	return 0;
 }
 
-int generate_database(enum ruleset ruleset) {
+int generate_database(void) {
 	for (int enemies = 0; enemies <= MAX_ENEMIES; ++enemies) {
 		int temp;
-		if ((temp = generate_file(ruleset, enemies, MUSKETEERS)) < 0)
+		if ((temp = generate_file(enemies, MUSKETEERS)) < 0)
 			return temp;
-		if ((temp = generate_file(ruleset, enemies, ENEMIES)) < 0)
+		if ((temp = generate_file(enemies, ENEMIES)) < 0)
 			return temp;
 	}
 
@@ -228,11 +222,10 @@ int generate_database(enum ruleset ruleset) {
 
 int solve(position_t position) {
 	position = normalize_position(position);
-	enum ruleset ruleset = get_ruleset(position);
 	int enemies = count_enemies(position);
 	enum player turn = get_turn(position);
 
-	return generate_file(ruleset, enemies, turn);
+	return generate_file(enemies, turn);
 }
 
 result_t lookup(position_t position) {
@@ -241,12 +234,11 @@ result_t lookup(position_t position) {
 
 	position = normalize_position(position);
 
-	enum ruleset ruleset = get_ruleset(position);
 	int enemies = count_enemies(position);
 	enum player turn = get_turn(position);
 
 	char filename[MAX_FILENAME];
-	make_filename(filename, ruleset, enemies, turn);
+	make_filename(filename, enemies, turn);
 
 	FILE *file;
 	if ((file = fopen(filename, "rb")) == NULL) {

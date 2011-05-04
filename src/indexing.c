@@ -1,7 +1,6 @@
 #include <stdint.h>
 
 #include "const.h"
-#include "ruleset.h"
 #include "position.h"
 #include "indexing.h"
 
@@ -44,14 +43,11 @@ static const int reflect_h[] = {
 	 0,  1,  2,  3,  4,
 };
 
-static uint64_t minimum_25b(enum ruleset rs, uint64_t n) {
+static uint64_t minimum_25b(uint64_t n) {
 	uint64_t min = n;
 
 	for (int rot = 0; rot < 4; ++rot) {
 		n = translate(rotate_cw, n);
-		if (rs == HORIZONTAL && rot % 2 == 0)
-			continue;
-
 		if (n < min)
 			min = n;
 
@@ -63,25 +59,20 @@ static uint64_t minimum_25b(enum ruleset rs, uint64_t n) {
 	return min;
 }
 
-uint64_t musketeer_indices[RULESETS];
+#define MAX_MUSKETEER_INDICES 2300 // C(25,3)
+uint64_t musketeer_indices;
 
-static uint16_t musketeers_to_index[RULESETS][1 << 25];
-static uint64_t index_to_musketeers[RULESETS][MAX_MUSKETEER_INDICES];
+static uint16_t musketeers_to_index[1 << SQUARES];
+static uint64_t index_to_musketeers[MAX_MUSKETEER_INDICES];
 
 static inline int position_normal(position_t pos) {
-	enum ruleset rs = get_ruleset(pos);
 	uint64_t musketeers = (pos & MUSKETEER_MASK) >> MUSKETEER_OFFSET;
-	return musketeers_to_index[rs][musketeers] != 0;
+	return musketeers_to_index[musketeers] != 0;
 }
 
 position_t normalize_position(position_t pos) {
-	enum ruleset rs = get_ruleset(pos);
-
 	for (int rot = 0; rot < 4; ++rot) {
 		pos = translate_position(rotate_cw, pos);
-		if (rs == HORIZONTAL && rot % 2 == 0)
-			continue;
-
 		if (position_normal(pos))
 			return pos;
 
@@ -94,25 +85,23 @@ position_t normalize_position(position_t pos) {
 }
 
 static void init_musketeer_indexing(void) {
-	for (enum ruleset rs = 0; rs < RULESETS; ++rs) {
-		int16_t count = 0;
-		for (uint64_t i = 0; i < SQUARES; ++i) {
-			for (uint64_t j = i + 1; j < SQUARES; ++j) {
-				for (uint64_t k = j + 1; k < SQUARES; ++k) {
-					uint64_t n = 1 << 24 - i |
-					             1 << 24 - j |
-					             1 << 24 - k;
-					n = minimum_25b(rs, n);
-					if (musketeers_to_index[rs][n] != 0)
-						continue;
-					musketeers_to_index[rs][n] = count + 1;
-					index_to_musketeers[rs][count] = n;
-					++count;
-				}
+	int16_t count = 0;
+	for (uint64_t i = 0; i < SQUARES; ++i) {
+		for (uint64_t j = i + 1; j < SQUARES; ++j) {
+			for (uint64_t k = j + 1; k < SQUARES; ++k) {
+				uint64_t n = 1 << SQUARES - 1 - i
+					   | 1 << SQUARES - 1 - j
+					   | 1 << SQUARES - 1 - k;
+				n = minimum_25b(n);
+				if (musketeers_to_index[n] != 0)
+					continue;
+				musketeers_to_index[n] = count + 1;
+				index_to_musketeers[count] = n;
+				++count;
 			}
 		}
-		musketeer_indices[rs] = count;
 	}
+	musketeer_indices = count;
 }
 
 #define MAX_COMB 50
@@ -134,12 +123,11 @@ static void init_enemy_indices(void) {
 		enemy_indices[i] = choose[MAX_ENEMIES][i];
 }
 
-uint64_t indices[RULESETS][MAX_ENEMIES + 1];
+uint64_t indices[MAX_ENEMIES + 1];
 
 static void init_indices(void) {
-	for (enum ruleset rs = 0; rs < RULESETS; ++rs)
-		for (int i = 0; i <= MAX_ENEMIES; ++i)
-			indices[rs][i] = musketeer_indices[rs] * enemy_indices[i];
+	for (int i = 0; i <= MAX_ENEMIES; ++i)
+		indices[i] = musketeer_indices * enemy_indices[i];
 }
 
 void init_indexing_tables(void) {
@@ -206,21 +194,19 @@ uint64_t position_to_index(position_t position) {
 	int n = 1 << 24 - musketeers[0] |
 	        1 << 24 - musketeers[1] |
 	        1 << 24 - musketeers[2];
-	enum ruleset rs = get_ruleset(position);
-	index *= musketeer_indices[rs];
-	index += musketeers_to_index[rs][n] - 1;
+	index *= musketeer_indices;
+	index += musketeers_to_index[n] - 1;
 
 	return index;
 }
 
 position_t index_to_position(position_t position, int enemies, uint64_t index) {
-	enum ruleset rs = get_ruleset(position);
 	position &= ~((1L << 50L) - 1L);
 
-	int musketeer_index = index % musketeer_indices[rs];
-	index /= musketeer_indices[rs];
+	int musketeer_index = index % musketeer_indices;
+	index /= musketeer_indices;
 
-	position |= index_to_musketeers[rs][musketeer_index] << MUSKETEER_OFFSET;
+	position |= index_to_musketeers[musketeer_index] << MUSKETEER_OFFSET;
 
 	int p[MAX_ENEMIES];
 	index_to_combination(p, index, MAX_ENEMIES, enemies);

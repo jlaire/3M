@@ -2,7 +2,6 @@
 #include <stdint.h>
 
 #include "const.h"
-#include "ruleset.h"
 
 int adjacent[SQUARES][SQUARES] = {{0}};
 
@@ -43,7 +42,7 @@ unsigned int popcnt(unsigned int n) {
 	return c;
 }
 
-uint8_t dead_pattern_table[RULESETS][1 << SQUARES] = {{0}};
+uint8_t dead_pattern_table[1 << SQUARES] = {0};
 
 void init_dead_pattern_table(void) {
 	for (int i = 0; i < SQUARES; ++i) {
@@ -55,21 +54,13 @@ void init_dead_pattern_table(void) {
 			for (int k = j + 1; k < SQUARES; ++k) {
 				int k_x = k % 5;
 				int k_y = k / 5;
-				int n = 1 << (24 - i) | 1 << (24 - j) | 1 << (24 - k);
+				int n = 1 << (SQUARES - 1 - i)
+				      | 1 << (SQUARES - 1 - j)
+				      | 1 << (SQUARES - 1 - k);
 				if (i_x == j_x && j_x == k_x ||
 				    i_y == j_y && j_y == k_y)
 				{
-					dead_pattern_table[STANDARD][n] = 1;
-				}
-				if (i_x == j_x && j_x == k_x &&
-				    (i_x == 0 || i_x == BOARD_WIDTH - 1) ||
-				    i_y == j_y && j_y == k_y &&
-				    (i_y == 0 || i_y == BOARD_HEIGHT - 1))
-				{
-					dead_pattern_table[BORDER][n] = 1;
-				}
-				if (i_y == j_y && j_y == k_y) {
-					dead_pattern_table[HORIZONTAL][n] = 1;
+					dead_pattern_table[n] = 1;
 				}
 			}
 		}

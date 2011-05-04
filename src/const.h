@@ -15,8 +15,6 @@ typedef unsigned int square_t;
 #define MUSKETEER_COUNT 3
 #define MAX_ENEMIES     (SQUARES - MUSKETEER_COUNT)
 
-#define RULESETS        3
-
 #define MAX_NEIGHBOURS  4
 
 /* O . X . O
@@ -35,7 +33,7 @@ void init_neighbours(void);
 /* Counts the number of set bits in n */
 unsigned int popcnt(unsigned int n);
 
-extern uint8_t dead_pattern_table[RULESETS][1 << 25];
+extern uint8_t dead_pattern_table[1 << SQUARES];
 void init_dead_pattern_table(void);
 
 enum player {MUSKETEERS, ENEMIES, NOBODY};

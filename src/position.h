@@ -5,10 +5,8 @@
 
 #include "const.h"
 #include "move.h"
-#include "ruleset.h"
 
-/* 10b:unused
- *  2b:ruleset
+/* 12b:unused
  *  1b:error?
  *  1b:turn (0 = MUSKETEERS, 1 = ENEMIES)
  * 25b:MUSKETEER?
@@ -16,13 +14,11 @@
  */
 typedef uint64_t position_t;
 
-#define RULESET_OFFSET   52L
 #define ERROR_OFFSET     51L
 #define TURN_OFFSET      50L
 #define MUSKETEER_OFFSET 25L
 #define ENEMY_OFFSET     0L
 
-#define RULESET_MASK     (((1L << 2L) - 1L) << RULESET_OFFSET)
 #define ERROR_BIT        (1L << ERROR_OFFSET)
 #define TURN_BIT         (1L << TURN_OFFSET)
 #define MUSKETEER_MASK   (((1L << 25L) - 1L) << MUSKETEER_OFFSET)
@@ -30,9 +26,6 @@ typedef uint64_t position_t;
 
 #define MUSKETEER_BIT(i) ((1L << MUSKETEER_OFFSET + 24L) >> (i))
 #define ENEMY_BIT(i)     ((1L << ENEMY_OFFSET + 24L) >> (i))
-
-inline enum ruleset get_ruleset(position_t position);
-inline position_t set_ruleset(position_t position, enum ruleset ruleset);
 
 inline enum player get_turn(position_t position);
 inline position_t set_turn(position_t position, enum player player);
@@ -89,14 +82,6 @@ enum player winner(position_t position);
 /********************/
 /* inline functions */
 /********************/
-
-inline enum ruleset get_ruleset(position_t position) {
-	return (position & RULESET_MASK) >> RULESET_OFFSET;
-}
-
-inline position_t set_ruleset(position_t position, enum ruleset ruleset) {
-	return position & ~RULESET_MASK | (uint64_t)ruleset << RULESET_OFFSET;
-}
 
 inline enum player get_turn(position_t position) {
 	return (position & TURN_BIT) >> TURN_OFFSET;

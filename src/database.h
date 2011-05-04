@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #include "const.h"
-#include "ruleset.h"
 #include "position.h"
 
 /* 1b: 1 = error, 0 = ok
@@ -49,9 +48,9 @@ int show_result(result_t result, char *string, int N);
  */
 int show_result_short(result_t result, char *string, int N);
 
-/* Generates all files required to play all positions with `ruleset' optimally.
+/* Generates all files required to play every position optimally.
  * Returns 0 on success, -1 on failure. */
-int generate_database(enum ruleset ruleset);
+int generate_database(void);
 
 /* Generates all files required for lookup() to work on this `position'.
  * Returns 0 on success, -1 on failure. */

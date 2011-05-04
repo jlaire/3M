@@ -3,7 +3,6 @@
 #include <unistd.h>
 
 #include "const.h"
-#include "ruleset.h"
 #include "move.h"
 #include "position.h"
 #include "indexing.h"
@@ -67,11 +66,6 @@ static void repl(void) {
 			goto READ_INPUT;
 		}
 
-		if (buf[0] == '@') {
-			generate_database(get_ruleset(position));
-			continue;
-		}
-
 		if (buf[0] == '<') {
 			move_t move;
 			int temp = read_move(&move, buf + 1);
@@ -100,12 +94,6 @@ static void repl(void) {
 			printf("(%s)\n", buf);
 		position = apply_move(position, move);
 	}
-}
-
-static void create_db(void) {
-	generate_database(STANDARD);
-	generate_database(BORDER);
-	generate_database(HORIZONTAL);
 }
 
 static void batch_mode(void) {
@@ -191,7 +179,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (option_g)
-		create_db();
+		generate_database();
 	if (option_i)
 		repl();
 	if (option_s)
