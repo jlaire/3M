@@ -4,16 +4,16 @@
 int move_valid(move_t move) {
 	square_t from = move_get_from(move);
 	square_t to = move_get_to(move);
-	return	SQUARE_VALID(from) &&
-		SQUARE_VALID(to) &&
-		adjacent[from][to];
+	return SQUARE_VALID(from) &&
+	       SQUARE_VALID(to) &&
+	       adjacent[from][to];
 }
 
 #define FILE_CHAR(c) ('a' <= (c) && (c) < 'a' + BOARD_WIDTH)
 #define RANK_CHAR(c) ('1' <= (c) && (c) < '1' + BOARD_HEIGHT)
 
-/* [a-e][1-5] */
-int read_square(square_t *square, char *string) {
+/* [^a-e]*[a-e][^1-5]*[1-5] */
+int read_square(square_t *square, const char *string) {
 	unsigned int len = 0;
 
 	for (; !FILE_CHAR(string[len]); ++len)
@@ -21,6 +21,9 @@ int read_square(square_t *square, char *string) {
 			return -1;
 
 	*square = string[len++] - 'a';
+
+	if (string[len] == '\0')
+		return -1;
 
 	for (; !RANK_CHAR(string[len]); ++len)
 		if (string[len] == '\0')
@@ -31,7 +34,7 @@ int read_square(square_t *square, char *string) {
 }
 
 /* <from-square> <to-square> */
-int read_move(move_t *move, char *string) {
+int read_move(move_t *move, const char *string) {
 	square_t from;
 	int len_from = read_square(&from, string);
 	if (len_from < 0)
@@ -80,7 +83,7 @@ int show_move(move_t move, char *string, int N) {
 	if (len_to < 0)
 		return len_to;
 
-	string[len_to + 1 + len_from] = '\0';
+	string[len_from + 1 + len_to] = '\0';
 
 	return len_from + 1 + len_to;
 }

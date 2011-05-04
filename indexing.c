@@ -5,7 +5,7 @@
 #include "position.h"
 #include "indexing.h"
 
-uint64_t translate(const int *p, uint64_t in) {
+static uint64_t translate(const int *p, uint64_t in) {
 	uint64_t out = 0;
 
 	for (int i = 0; i < 25; ++i)
@@ -15,7 +15,7 @@ uint64_t translate(const int *p, uint64_t in) {
 	return out;
 }
 
-position_t translate_position(const int *p, position_t pos) {
+static position_t translate_position(const int *p, position_t pos) {
 	uint64_t new_es = translate(p, (pos & ENEMY_MASK) >> ENEMY_OFFSET);
 	uint64_t new_ms = translate(p, (pos & MUSKETEER_MASK) >> MUSKETEER_OFFSET);
 
@@ -28,7 +28,7 @@ position_t translate_position(const int *p, position_t pos) {
 	return pos;
 }
 
-const int rotate_cw[] = {
+static const int rotate_cw[] = {
 	 4,  9, 14, 19, 24,
 	 3,  8, 13, 18, 23,
 	 2,  7, 12, 17, 22,
@@ -36,7 +36,7 @@ const int rotate_cw[] = {
 	 0,  5, 10, 15, 20,
 };
 
-const int reflect_h[] = {
+static const int reflect_h[] = {
 	20, 21, 22, 23, 24,
 	15, 16, 17, 18, 19,
 	10, 11, 12, 13, 14,
@@ -44,7 +44,7 @@ const int reflect_h[] = {
 	 0,  1,  2,  3,  4,
 };
 
-uint64_t minimum_25b(enum ruleset rs, uint64_t n) {
+static uint64_t minimum_25b(enum ruleset rs, uint64_t n) {
 	uint64_t min = n;
 
 	for (int rot = 0; rot < 4; ++rot) {
@@ -65,10 +65,10 @@ uint64_t minimum_25b(enum ruleset rs, uint64_t n) {
 
 uint64_t musketeer_indices[RULESETS];
 
-uint16_t musketeers_to_index[RULESETS][1 << 25];
-uint64_t index_to_musketeers[RULESETS][MAX_MUSKETEER_INDICES];
+static uint16_t musketeers_to_index[RULESETS][1 << 25];
+static uint64_t index_to_musketeers[RULESETS][MAX_MUSKETEER_INDICES];
 
-inline int position_normal(position_t pos) {
+static inline int position_normal(position_t pos) {
 	enum ruleset rs = get_ruleset(pos);
 	uint64_t musketeers = (pos & MUSKETEER_MASK) >> MUSKETEER_OFFSET;
 	return musketeers_to_index[rs][musketeers] != 0;
@@ -93,7 +93,7 @@ position_t normalize_position(position_t pos) {
 	return error_position;
 }
 
-void init_musketeer_indexing(void) {
+static void init_musketeer_indexing(void) {
 	for (enum ruleset rs = 0; rs < RULESETS; ++rs) {
 		int16_t count = 0;
 		for (uint64_t i = 0; i < SQUARES; ++i) {
@@ -116,9 +116,9 @@ void init_musketeer_indexing(void) {
 }
 
 #define MAX_COMB 50
-uint64_t choose[MAX_COMB + 1][MAX_COMB + 1] = {{0}};
+static uint64_t choose[MAX_COMB + 1][MAX_COMB + 1] = {{0}};
 
-void init_choose(void) {
+static void init_choose(void) {
 	for (uint64_t n = 0; n <= MAX_COMB; ++n)
 		choose[n][0] = 1;
 
@@ -129,14 +129,14 @@ void init_choose(void) {
 
 uint64_t enemy_indices[MAX_ENEMIES + 1];
 
-void init_enemy_indices(void) {
+static void init_enemy_indices(void) {
 	for (int i = 0; i <= MAX_ENEMIES; ++i)
 		enemy_indices[i] = choose[MAX_ENEMIES][i];
 }
 
 uint64_t indices[RULESETS][MAX_ENEMIES + 1];
 
-void init_indices(void) {
+static void init_indices(void) {
 	for (enum ruleset rs = 0; rs < RULESETS; ++rs)
 		for (int i = 0; i <= MAX_ENEMIES; ++i)
 			indices[rs][i] = musketeer_indices[rs] * enemy_indices[i];

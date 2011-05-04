@@ -32,7 +32,8 @@ extern int neighbours[SQUARES][MAX_NEIGHBOURS];
 void init_adjacent(void);
 void init_neighbours(void);
 
-unsigned int count_bits_25(unsigned int n);
+/* Counts the number of set bits in n */
+unsigned int popcnt(unsigned int n);
 
 extern uint8_t dead_pattern_table[RULESETS][1 << 25];
 void init_dead_pattern_table(void);

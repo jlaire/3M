@@ -19,7 +19,7 @@ inline move_t move_set_to(move_t move, square_t to);
 int move_valid(move_t move);
 
 /* Returns the number of characters read on success, -1 on failure */
-int read_move(move_t *move, char *string);
+int read_move(move_t *move, const char *string);
 
 /* Returns the number of characters written on success, -1 if the
  * move is invalid, and -2 if the buffer is too short

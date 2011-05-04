@@ -36,14 +36,14 @@ void init_neighbours(void) {
 	}
 }
 
-unsigned int count_bits_25(unsigned int n) {
+unsigned int popcnt(unsigned int n) {
 	unsigned int c;
 	for (c = 0; n; ++c)
 		n &= n - 1;
 	return c;
 }
 
-uint8_t dead_pattern_table[RULESETS][1 << 25] = {{0}};
+uint8_t dead_pattern_table[RULESETS][1 << SQUARES] = {{0}};
 
 void init_dead_pattern_table(void) {
 	for (int i = 0; i < SQUARES; ++i) {

@@ -53,24 +53,26 @@ result_t max_result(enum player player, result_t r0, result_t r1) {
 	int d0 = result_get_depth(r0);
 	int d1 = result_get_depth(r1);
 
-	if (w0 == player)
+	if (w0 == player) {
 		if (w1 == player)
 			return d0 < d1 ? r0 : r1;
 		else
 			return r0;
-	else
+	}
+	else {
 		if (w1 == player)
 			return r1;
 		else
 			return d0 > d1 ? r0 : r1;
+	}
 }
 
 #define MAX_FILENAME 18
-const char database_dir[] = "DB";
-const char *ruleset_strs[] = {"STANDARD", "BORDER", "HORIZONTAL"};
-const char *player_strs[] = {"M", "E", ""};
+static const char database_dir[] = "DB";
+static const char *ruleset_strs[] = {"STANDARD", "BORDER", "HORIZONTAL"};
+static const char *player_strs[] = {"M", "E", ""};
 
-void make_filename(char *string, enum ruleset ruleset, int enemies, enum player player) {
+static void make_filename(char *string, enum ruleset ruleset, int enemies, enum player player) {
 	sprintf(string,
 	        "%s/%s/%02d%s",
 		database_dir,
@@ -79,16 +81,16 @@ void make_filename(char *string, enum ruleset ruleset, int enemies, enum player 
 	        player_strs[player]);
 }
 
-inline int get_next_enemies(int enemies, enum player player) {
+static inline int get_next_enemies(int enemies, enum player player) {
 	return player == MUSKETEERS ? enemies - 1 : enemies;
 }
 
-inline int get_next_turn(enum player player) {
+static inline int get_next_turn(enum player player) {
 	return player == MUSKETEERS ? ENEMIES : MUSKETEERS;
 }
 
 /* Returns the size in bytes on success, 0 on failure */
-uint64_t file_size(const char *filename) {
+static uint64_t file_size(const char *filename) {
 	struct stat buf;
 
 	if (stat(filename, &buf))
@@ -98,7 +100,7 @@ uint64_t file_size(const char *filename) {
 }
 
 /* This is the base case. There can't be any legal moves without enemies */
-int generate_file_zero_enemies(enum ruleset rs, enum player turn) {
+static int generate_file_zero_enemies(enum ruleset rs, enum player turn) {
 	position_t position = start_position;
 	position = set_ruleset(position, rs);
 	position = set_turn(position, turn);
@@ -134,7 +136,7 @@ int generate_file_zero_enemies(enum ruleset rs, enum player turn) {
 	return 0;
 }
 
-int generate_file(enum ruleset rs, int enemies, enum player turn) {
+static nt generate_file(enum ruleset rs, int enemies, enum player turn) {
 	if (enemies == 0)
 		return generate_file_zero_enemies(rs, turn);
 
@@ -153,7 +155,7 @@ int generate_file(enum ruleset rs, int enemies, enum player turn) {
 
 	FILE *next;
 	if ((next = fopen(next_filename, "rb")) == NULL) {
-		fprintf(stderr, "generate_file: Couldn't open file %s\n", next_filename);
+		fprintf(stderr, "generate_file: Couldn't open file %s for reading\n", next_filename);
 		return -1;
 	}
 
@@ -171,10 +173,11 @@ int generate_file(enum ruleset rs, int enemies, enum player turn) {
 
 	make_filename(filename, rs, enemies, turn);
 
-	fprintf(stderr, "Generating file %s\n", filename);
+	fprintf(stderr, "Generating file %s...", filename);
+	fflush(stderr);
 	FILE *out;
 	if ((out = fopen(filename, "ab")) == NULL) {
-		fprintf(stderr, "generate_file: Couldn't open file %s\n", filename);
+		fprintf(stderr, "generate_file: Couldn't open file %s for writing\n", filename);
 		return -1;
 	}
 
@@ -206,15 +209,14 @@ int generate_file(enum ruleset rs, int enemies, enum player turn) {
 	free(next_results);
 	fclose(out);
 
-	fprintf(stderr, "File %s is done\n", filename);
+	fprintf(stderr, " done\n");
 
 	return 0;
 }
 
 int generate_database(enum ruleset ruleset) {
-	int temp;
-
 	for (int enemies = 0; enemies <= MAX_ENEMIES; ++enemies) {
+		int temp;
 		if ((temp = generate_file(ruleset, enemies, MUSKETEERS)) < 0)
 			return temp;
 		if ((temp = generate_file(ruleset, enemies, ENEMIES)) < 0)
@@ -224,13 +226,13 @@ int generate_database(enum ruleset ruleset) {
 	return 0;
 }
 
-void solve(position_t position) {
+int solve(position_t position) {
 	position = normalize_position(position);
 	enum ruleset ruleset = get_ruleset(position);
 	int enemies = count_enemies(position);
 	enum player turn = get_turn(position);
 
-	generate_file(ruleset, enemies, turn);
+	return generate_file(ruleset, enemies, turn);
 }
 
 result_t lookup(position_t position) {
@@ -248,7 +250,7 @@ result_t lookup(position_t position) {
 
 	FILE *file;
 	if ((file = fopen(filename, "rb")) == NULL) {
-		fprintf(stderr, "lookup: Couldn't open file %s\n", filename);
+		fprintf(stderr, "lookup: Couldn't open file %s for reading\n", filename);
 		return error_result;
 	}
 

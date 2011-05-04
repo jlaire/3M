@@ -1,11 +1,10 @@
 #ifndef RULESET_H
 #define RULESET_H
 
-/* Currently, the only difference between rulesets is what
- * counts as a win for ENEMIES. In STANDARD, any horizontal
- * or vertical line; in BORDER, any line along any of the 4
- * borders of the board; and in HORIZONTAL, only horizontal
- * lines.
+/* The only difference between rulesets is which patterns count as a win for
+ * ENEMIES. In the STANDARD ruleset, any horizontal or vertical line wins; in
+ * BORDER, lines that lie on one of the 4 borders of the board win; and in
+ * HORIZONTAL, only horizontal lines win.
  *
  * +-+-+-+-+   +-------+   ---------
  * | | | | |   |       |

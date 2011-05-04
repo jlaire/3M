@@ -7,7 +7,7 @@
 #include "move.h"
 #include "ruleset.h"
 
-/* 10b:blank
+/* 10b:unused
  *  2b:ruleset
  *  1b:error?
  *  1b:turn (0 = MUSKETEERS, 1 = ENEMIES)
@@ -158,11 +158,11 @@ inline uint64_t position_ok(position_t position) {
 }
 
 inline unsigned int count_musketeers(position_t position) {
-	return count_bits_25((position & MUSKETEER_MASK) >> MUSKETEER_OFFSET);
+	return popcnt((position & MUSKETEER_MASK) >> MUSKETEER_OFFSET);
 }
 
 inline unsigned int count_enemies(position_t position) {
-	return count_bits_25((position & ENEMY_MASK) >> ENEMY_OFFSET);
+	return popcnt((position & ENEMY_MASK) >> ENEMY_OFFSET);
 }
 
 #endif

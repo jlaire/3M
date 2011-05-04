@@ -28,8 +28,8 @@ inline result_t result_set_winner(result_t result, enum player player);
 inline int result_get_depth(result_t result);
 inline result_t result_set_depth(result_t result, int depth);
 
-/* Returns r0 or r1, depending which is better for player.
- * If they are equally good, returns r0.
+/* Returns r0 or r1, whichever is better for `player'.
+ * If they are equally good, r0 is returned.
  * - Any result is better than error_result
  * - Winning is better than losing
  * - Winning in N moves is better than winning in K moves iff N < K
@@ -37,28 +37,27 @@ inline result_t result_set_depth(result_t result, int depth);
  */
 result_t max_result(enum player player, result_t r0, result_t r1);
 
-/* Returns the number of characters written on success, -1 if the
- * result is invalid, and -2 if the buffer is too short
+/* Writes a short English sentence describing `result' to `string'. Returns the
+ * number of characters written on success, -1 if the  result is invalid, and -2
+ * if the buffer is too short.
  */
 int show_result(result_t result, char *string, int N);
 
-/* Returns the number of characters written on success,
- * -2 if the buffer is too short
+/* Displays `result' as [ME]\d+, indicating the winning player and number of
+ * moves required to force the win. Returns the number of characters written on
+ * success, -2 if the buffer is too short.
  */
 int show_result_short(result_t result, char *string, int N);
 
-/* Returns 0 on success, -1 on failure */
-int generate_file_zero_enemies(enum ruleset ruleset, enum player turn);
-
-/* Returns 0 on success, -1 on failure */
-int generate_file(enum ruleset ruleset, int enemies, enum player turn);
-
-/* Returns 0 on success, -1 on failure */
+/* Generates all files required to play all positions with `ruleset' optimally.
+ * Returns 0 on success, -1 on failure. */
 int generate_database(enum ruleset ruleset);
 
-void solve(position_t position);
+/* Generates all files required for lookup() to work on this `position'.
+ * Returns 0 on success, -1 on failure. */
+int solve(position_t position);
 
-/* Returns error_result on error */
+/* Returns error_result on error. */
 result_t lookup(position_t position);
 
 /********************/
