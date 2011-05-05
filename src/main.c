@@ -57,11 +57,14 @@ static void repl(void) {
 			break;
 
 		if (buf[0] == '?') {
-			solve(position);
+			//solve(position);
 			result_t result = lookup(position);
 			if (result_ok(result)) {
 				show_result(result, buf, BUF_SIZE);
 				printf("%s\n", buf);
+			}
+			else {
+				printf("Position not found in database\n");
 			}
 			goto READ_INPUT;
 		}
@@ -128,10 +131,10 @@ static void batch_mode(void) {
 
 static void usage(void) {
 	printf("Usage: ./3M [-g] [-i|-s]\n"
-	       "\t-g\tGenerate databases for optimal AI\n"
+	       "\t-g\tGenerate database for optimal AI\n"
 	       "\t-h\tShow usage\n"
 	       "\t-i\tInteractive mode\n"
-	       "\t-s\tRead positions from stdin and write optimal moves to stdout\n");
+	       "\t-s\tRead positions from stdin and write optimal results to stdout\n");
 }
 
 int main(int argc, char *argv[]) {
