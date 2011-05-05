@@ -33,8 +33,7 @@ void init_neighbours(void);
 /* Counts the number of set bits in n */
 unsigned int popcnt(unsigned int n);
 
-extern uint8_t dead_pattern_table[1 << SQUARES];
-void init_dead_pattern_table(void);
+int is_dead_pattern(uint32_t);
 
 enum player {MUSKETEERS, ENEMIES, NOBODY};
 enum square {MUSKETEER, ENEMY, EMPTY};

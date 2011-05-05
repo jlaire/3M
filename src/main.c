@@ -139,7 +139,6 @@ int main(int argc, char *argv[]) {
 	init_adjacent();
 	init_neighbours();
 	init_positions();
-	init_dead_pattern_table();
 	init_indexing_tables();
 
 	int option_g = 0;

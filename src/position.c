@@ -118,7 +118,7 @@ int show_position(position_t position, char *string, int N) {
 
 inline int dead_pattern(position_t position) {
 	uint64_t n = (position & MUSKETEER_MASK) >> MUSKETEER_OFFSET;
-	return dead_pattern_table[n];
+	return is_dead_pattern(n);
 }
 
 int move_legal(position_t position, move_t move) {
