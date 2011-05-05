@@ -105,24 +105,24 @@ static void batch_mode(void) {
 			continue;
 		}
 		result_t result = lookup(position);
-		char out[BUF_SIZE] = {0};
-		int outlen = show_result(result, out, BUF_SIZE);
-		out[outlen++] = ' ';
-		out[outlen++] = '-';
-		out[outlen++] = '>';
-		out[outlen++] = ' ';
+		char str[BUF_SIZE] = {0};
+		show_result_short(result, str, BUF_SIZE);
+		printf("%s -> ", str);
 		move_t moves[MAX_BRANCHING];
 		int move_count = list_legal_moves(position, moves);
+		int strlen = 0;
 		for (int i = 0; i < move_count; ++i) {
 			result_t result = lookup(apply_move(position, moves[i]));
 			if (i > 0) {
-				out[outlen++] = ',';
-				out[outlen++] = ' ';
+				str[strlen++] = ',';
+				str[strlen++] = ' ';
 			}
-			outlen += show_move(moves[i], out + outlen, BUF_SIZE - outlen);
-			outlen += show_result_short(result, out + outlen, BUF_SIZE - outlen);
+			strlen += show_move(moves[i], str + strlen, BUF_SIZE - strlen);
+			str[strlen++] = ' ';
+			strlen += show_result_short(result, str + strlen, BUF_SIZE - strlen);
 		}
-		printf("%s\n", out);
+		str[strlen] = '\0';
+		printf("[%s]\n", str);
 	}
 }
 
