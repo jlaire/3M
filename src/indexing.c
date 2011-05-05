@@ -60,7 +60,8 @@ static uint64_t minimum_25b(uint64_t n) {
 }
 
 #define MAX_MUSKETEER_INDICES 2300 // C(25,3)
-uint64_t musketeer_indices;
+// The actual value is smaller than 2300 because of symmetries
+static uint64_t musketeer_indices;
 
 static uint16_t musketeers_to_index[1 << SQUARES];
 static uint64_t index_to_musketeers[MAX_MUSKETEER_INDICES];
@@ -116,7 +117,8 @@ static void init_choose(void) {
 			choose[n][r] = choose[n - 1][r - 1] + choose[n - 1][r];
 }
 
-uint64_t enemy_indices[MAX_ENEMIES + 1];
+/* enemy_indices[n] = choose(MAX_ENEMIES, n) */
+static uint64_t enemy_indices[MAX_ENEMIES + 1];
 
 static void init_enemy_indices(void) {
 	for (int i = 0; i <= MAX_ENEMIES; ++i)
@@ -137,7 +139,10 @@ void init_indexing_tables(void) {
 	init_indices();
 }
 
-uint64_t combination_to_index(const int *p, unsigned int N, unsigned int K) {
+/* Parameter `p' must point to N boolean values exactly K of which are non-zero.
+ * Return value is in [0, choose(N, K)).
+ */
+static uint64_t combination_to_index(const int *p, unsigned int N, unsigned int K) {
 	uint64_t index = 0;
 	unsigned int r = K;
 
@@ -148,7 +153,7 @@ uint64_t combination_to_index(const int *p, unsigned int N, unsigned int K) {
 	return index;
 }
 
-void index_to_combination(int *p, uint64_t index, unsigned int N, unsigned int K) {
+static void index_to_combination(int *p, uint64_t index, unsigned int N, unsigned int K) {
 	unsigned int r = K;
 
 	for (square_t i = 0; i < N; ++i) {
