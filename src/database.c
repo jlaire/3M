@@ -107,7 +107,7 @@ static int generate_file_zero_enemies(enum player turn) {
 		return 0;
 
 	fprintf(stderr, "Generating file %s...", filename);
-
+	fflush(stderr);
 	FILE *out;
 	if ((out = fopen(filename, "ab")) == NULL) {
 		fprintf(stderr, "generate_file_zero_enemies: Couldn't open file %s for writing\n", filename);
@@ -121,7 +121,7 @@ static int generate_file_zero_enemies(enum player turn) {
 		enum player temp = winner(position);
 		assert(temp == MUSKETEERS || temp == ENEMIES);
 		result = result_set_winner(result, temp);
-		fprintf(out, "%c", (unsigned char)result);
+		fputc((int)result, out);
 	}
 
 	fclose(out);
@@ -145,8 +145,10 @@ static int generate_file(int enemies, enum player turn) {
 	char next_filename[MAX_FILENAME];
 	make_filename(next_filename, next_enemies, next_turn);
 
+	// Generate necessary files recursively
 	if (file_size(next_filename) != indices[next_enemies])
-		generate_file( next_enemies, next_turn);
+		if (generate_file(next_enemies, next_turn) == -1)
+			return -1;
 
 	FILE *next;
 	if ((next = fopen(next_filename, "rb")) == NULL) {
@@ -211,9 +213,9 @@ static int generate_file(int enemies, enum player turn) {
 int generate_database(void) {
 	for (int enemies = 0; enemies <= MAX_ENEMIES; ++enemies) {
 		int temp;
-		if ((temp = generate_file(enemies, MUSKETEERS)) < 0)
+		if ((temp = generate_file(enemies, MUSKETEERS)) == -1)
 			return temp;
-		if ((temp = generate_file(enemies, ENEMIES)) < 0)
+		if ((temp = generate_file(enemies, ENEMIES)) == -1)
 			return temp;
 	}
 
@@ -240,20 +242,20 @@ result_t lookup(position_t position) {
 	char filename[MAX_FILENAME];
 	make_filename(filename, enemies, turn);
 
-	FILE *file;
-	if ((file = fopen(filename, "rb")) == NULL) {
+	FILE *file = fopen(filename, "rb");
+	if (file == NULL) {
 		fprintf(stderr, "lookup: Couldn't open file %s for reading\n", filename);
 		return error_result;
 	}
 
 	uint64_t index = position_to_index(position);
 	if (fseek(file, (long)index, SEEK_SET)) {
-		fprintf(stderr, "lookup: Seek failed\n");
+		fprintf(stderr, "lookup: fseek failed\n");
 		return error_result;
 	}
 
-	int c;
-	if ((c = fgetc(file)) == EOF) {
+	int c = fgetc(file);
+	if (c == EOF) {
 		fprintf(stderr, "lookup: fgetc failed\n");
 		return error_result;
 	}

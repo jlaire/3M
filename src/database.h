@@ -37,7 +37,7 @@ inline result_t result_set_depth(result_t result, int depth);
 result_t max_result(enum player player, result_t r0, result_t r1);
 
 /* Writes a short English sentence describing `result' to `string'. Returns the
- * number of characters written on success, -1 if the  result is invalid, and -2
+ * number of characters written on success, -1 if the result is invalid, and -2
  * if the buffer is too short.
  */
 int show_result(result_t result, char *string, int N);
