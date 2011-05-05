@@ -9,7 +9,7 @@ non-perfect opponent, it doesn't fight very hard and has room for improvement.
 Three Musketeers
 ================
 
-This board game has very simple rules. You can find them and more information
+Three Musketeers has very simple rules. You can find them and more information
 with Google or at the Wikipedia article:
 
 	http://en.wikipedia.org/wiki/Three_Musketeers_(game)
