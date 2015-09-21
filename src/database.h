@@ -85,7 +85,7 @@ inline int result_get_depth(result_t result) {
 }
 
 inline result_t result_set_depth(result_t result, int depth) {
-	return result & ~RESULT_DEPTH_MASK | depth & RESULT_DEPTH_MASK;
+	return (result & ~RESULT_DEPTH_MASK) | (depth & RESULT_DEPTH_MASK);
 }
 
 inline result_t result_inc_depth(result_t result) {

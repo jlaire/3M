@@ -24,8 +24,8 @@ typedef uint64_t position_t;
 #define MUSKETEER_MASK   (((1L << 25L) - 1L) << MUSKETEER_OFFSET)
 #define ENEMY_MASK       (((1L << 25L) - 1L) << ENEMY_OFFSET)
 
-#define MUSKETEER_BIT(i) ((1L << MUSKETEER_OFFSET + 24L) >> (i))
-#define ENEMY_BIT(i)     ((1L << ENEMY_OFFSET + 24L) >> (i))
+#define MUSKETEER_BIT(i) ((1L << (MUSKETEER_OFFSET + 24L)) >> (i))
+#define ENEMY_BIT(i)     ((1L << (ENEMY_OFFSET + 24L)) >> (i))
 
 inline enum player get_turn(position_t position);
 inline position_t set_turn(position_t position, enum player player);
@@ -88,7 +88,7 @@ inline enum player get_turn(position_t position) {
 }
 
 inline position_t set_turn(position_t position, enum player player) {
-	return position & ~TURN_BIT | (uint64_t)player << TURN_OFFSET;
+	return (position & ~TURN_BIT) | (uint64_t)player << TURN_OFFSET;
 }
 
 inline position_t put_musketeer(position_t position, square_t i) {

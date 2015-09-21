@@ -8,8 +8,8 @@ static uint64_t translate(const int *p, uint64_t in) {
 	uint64_t out = 0;
 
 	for (int i = 0; i < 25; ++i)
-		if (in & 1 << 24 - i)
-			out |= 1 << 24 - p[i];
+		if (in & 1 << (24 - i))
+			out |= 1 << (24 - p[i]);
 
 	return out;
 }
@@ -90,9 +90,9 @@ static void init_musketeer_indexing(void) {
 	for (uint64_t i = 0; i < SQUARES; ++i) {
 		for (uint64_t j = i + 1; j < SQUARES; ++j) {
 			for (uint64_t k = j + 1; k < SQUARES; ++k) {
-				uint64_t n = 1 << SQUARES - 1 - i
-					   | 1 << SQUARES - 1 - j
-					   | 1 << SQUARES - 1 - k;
+				uint64_t n = 1 << (SQUARES - 1 - i)
+					   | 1 << (SQUARES - 1 - j)
+					   | 1 << (SQUARES - 1 - k);
 				n = minimum_25b(n);
 				if (musketeers_to_index[n] != 0)
 					continue;
@@ -196,9 +196,9 @@ uint64_t position_to_index(position_t position) {
 	int enemies = count_enemies(position);
 	uint64_t index = combination_to_index(p, MAX_ENEMIES, enemies);
 
-	int n = 1 << 24 - musketeers[0] |
-	        1 << 24 - musketeers[1] |
-	        1 << 24 - musketeers[2];
+	int n = 1 << (24 - musketeers[0]) |
+	        1 << (24 - musketeers[1]) |
+	        1 << (24 - musketeers[2]);
 	index *= musketeer_indices;
 	index += musketeers_to_index[n] - 1;
 

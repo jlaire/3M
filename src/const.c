@@ -1,6 +1,6 @@
 #include <assert.h>
-#include <math.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "const.h"
 
@@ -13,8 +13,8 @@ void init_adjacent(void) {
 		for (int j = 0; j < SQUARES; ++j) {
 			int j_x = j % 5;
 			int j_y = j / 5;
-			if (i_x == j_x && fabs(i_y - j_y) == 1 ||
-			    i_y == j_y && fabs(i_x - j_x) == 1)
+			if ((i_x == j_x && abs(i_y - j_y) == 1) ||
+			    (i_y == j_y && abs(i_x - j_x) == 1))
 			{
 				adjacent[i][j] = 1;
 				adjacent[j][i] = 1;
@@ -62,8 +62,8 @@ static inline void init_dead_patterns(uint32_t *deads) {
 				int n = 1 << (SQUARES - 1 - i)
 				      | 1 << (SQUARES - 1 - j)
 				      | 1 << (SQUARES - 1 - k);
-				if (i_x == j_x && j_x == k_x ||
-				    i_y == j_y && j_y == k_y)
+				if ((i_x == j_x && j_x == k_x) ||
+				    (i_y == j_y && j_y == k_y))
 				{
 					deads[count++] = n;
 				}

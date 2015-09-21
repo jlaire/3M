@@ -35,11 +35,11 @@ inline square_t move_get_to(move_t move) {
 }
 
 inline move_t move_set_from(move_t move, square_t from) {
-	return move & MOVE_TO_MASK | from << MOVE_FROM_OFFSET;
+	return (move & MOVE_TO_MASK) | from << MOVE_FROM_OFFSET;
 }
 
 inline move_t move_set_to(move_t move, square_t to) {
-	return move & MOVE_FROM_MASK | to;
+	return (move & MOVE_FROM_MASK) | to;
 }
 
 #endif

@@ -1,25 +1,29 @@
 Overview
 ========
 
-This small C project implements a "perfect" AI player for a board game called
-Three Musketeers. When the AI is in a winning position, it will win in as few
-moves as possible. However, when it is in a lost position and playing against a
-non-perfect opponent, it doesn't fight very hard and has room for improvement.
+This is a "perfect" AI player for a board game called Three Musketeers. When
+the program is in a winning position, it will force a win in as few moves as
+possible.
+
+However, when it is in a lost position, it will not resist very hard and even a
+human can beat it easily. It would be interesting to experiment with heuristics
+for tricking an imperfect opponent into making a mistake and giving away the
+win.
 
 Three Musketeers
 ================
 
-Three Musketeers has very simple rules. You can find them and more information
-with Google or at the Wikipedia article:
+The rules are available at Wikipedia:
 
 	http://en.wikipedia.org/wiki/Three_Musketeers_(game)
 
 Algorithm
 =========
 
-The program builds a database that contains the winner and number of moves
-required for each position. The best next move can be found by looking up the
-position following each possible move and selecting the one with best result.
+The program builds a database that contains the winning side and the number of
+moves required for each position. Using the database, the best move for a given
+position can be found by looking up trying every possible move and looking up
+the resulting position. Then simply pick the one giving the best result.
 
 This approach is feasible because the game has only some millions of
 positions.
@@ -31,4 +35,4 @@ and each position takes one byte.
 TODO
 ====
 
-The database generation is very slow and overall the code could be more robust.
+The database generation is very slow. :( Leave it running overnight.
