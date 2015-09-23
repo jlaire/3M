@@ -22,8 +22,7 @@ moves required for each position. Using the database, the best move for a given
 position can be found by looking up trying every possible move and looking up
 the resulting position. Then simply pick the one giving the best result.
 
-This approach is feasible because the game has only some millions of
-positions.
+This approach is feasible because the game has only a few billion positions.
 
 The database is built using retrogade analysis, starting from the positions
 where the game is over and working backwards. One file is used per depth and
