@@ -175,6 +175,7 @@ static int generate_file(int enemies, enum player turn) {
 	FILE *out;
 	if ((out = fopen(filename, "ab")) == NULL) {
 		fprintf(stderr, "generate_file: Couldn't open file %s for writing\n", filename);
+		free(next_results);
 		return -1;
 	}
 
