@@ -48,6 +48,14 @@ int show_result(result_t result, char *string, int N);
  */
 int show_result_short(result_t result, char *string, int N);
 
+/* Set path to the data folder.
+ */
+void set_database_path(const char *path);
+
+/* Get path to the data folder.
+ */
+const char *get_database_path(void);
+
 /* Generates all files required to play every position optimally.
  * Returns 0 on success, -1 on failure. */
 int generate_database(void);

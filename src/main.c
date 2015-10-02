@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "const.h"
@@ -130,7 +131,8 @@ static void batch_mode(void) {
 }
 
 static void usage(void) {
-	printf("Usage: ./3M [-g] [-i|-s]\n"
+	printf("Usage: ./3M [-d path] [-g] [-i|-s]\n"
+	       "\t-d dir\tFolder to use for data files (default 'data')\n"
 	       "\t-g\tGenerate database for optimal AI\n"
 	       "\t-h\tShow usage\n"
 	       "\t-i\tInteractive mode\n"
@@ -144,13 +146,15 @@ int main(int argc, char *argv[]) {
 	init_positions();
 	init_indexing_tables();
 
+	set_database_path("data");
+
 	int option_g = 0;
 	int option_h = 0;
 	int option_i = 0;
 	int option_s = 0;
 
 	int option;
-	while ((option = getopt(argc, argv, "ghis")) != -1) {
+	while ((option = getopt(argc, argv, "ghisd:")) != -1) {
 		switch (option) {
 		case 'i':
 			option_i = 1;
@@ -160,6 +164,9 @@ int main(int argc, char *argv[]) {
 			break;
 		case 's':
 			option_s = 1;
+			break;
+		case 'd':
+			set_database_path(optarg);
 			break;
 		case 'h':
 		default:

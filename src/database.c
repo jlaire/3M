@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -66,13 +67,13 @@ result_t max_result(enum player player, result_t r0, result_t r1) {
 	}
 }
 
-#define MAX_FILENAME 8
+#define MAX_FILENAME 512
 static void make_filename(char *string, int enemies, enum player player) {
-	static const char database_dir[] = "data";
 	static const char *player_strs[] = {"M", "E", ""};
-	sprintf(string,
+	snprintf(string,
+	        MAX_FILENAME,
 	        "%s/%02d%s",
-		database_dir,
+		get_database_path(),
 	        enemies,
 	        player_strs[player]);
 }
@@ -209,6 +210,17 @@ static int generate_file(int enemies, enum player turn) {
 	fprintf(stderr, " done\n");
 
 	return 0;
+}
+
+static char *database_path = NULL;
+const char *get_database_path(void) {
+	return database_path;
+}
+
+void set_database_path(const char *path) {
+	free(database_path);
+	database_path = malloc(strlen(path) + 1);
+        strcpy(database_path, path);
 }
 
 int generate_database(void) {
